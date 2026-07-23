@@ -11,6 +11,7 @@ class LearningBackend:
     def __init__(self):
         self.score=0
         self.events=[]
+        self.answered_step_ids=set()
         self.steps=[
             {"type":PageType.THEORY,"title":"Introduction","content":"Welcome to the chapter. Read before continuing."},
             {"type":PageType.MCQ,"question":"2 + 5 = ?","options":["5","6","7","8"],"answer":2,"explanation":"2+5=7","time_limit":30},
@@ -22,27 +23,45 @@ class LearningBackend:
         return 0
 
     def get_step(self,index):
-        if index>=len(self.steps):
+        if not isinstance(index, int) or index < 0 or index >= len(self.steps):
             return {"type":PageType.END}
         return self.steps[index]
 
     def next_step(self,index):
-        return index+1
+        if not isinstance(index, int):
+            return len(self.steps)
+        return min(index + 1, len(self.steps))
 
     def check_answer(self,step,selected):
-        return selected==step["answer"]
+        if not isinstance(step, dict) or step.get("type") != PageType.MCQ:
+            return False
+        options = step.get("options")
+        answer = step.get("answer")
+        if not isinstance(options, list) or not isinstance(selected, int):
+            return False
+        if not 0 <= selected < len(options):
+            return False
+        return selected == answer
 
     def on_event(self,event,**kwargs):
         self.events.append({"event":event,**kwargs})
         if event=="answer_submitted":
             sid=kwargs.get("step_id",0)
             step=self.get_step(sid)
-            if step.get("type")==PageType.MCQ and kwargs.get("correct"):
+            if (
+                step.get("type") == PageType.MCQ
+                and sid not in self.answered_step_ids
+                and self.check_answer(step, kwargs.get("answer"))
+                and kwargs.get("correct")
+            ):
                 self.score+=1
+            if step.get("type") == PageType.MCQ:
+                self.answered_step_ids.add(sid)
         elif event=="time_expired":
             print(f"Timeout on step {kwargs.get('step_id')}")
         elif event=="chapter_started":
             self.score=0
+            self.answered_step_ids.clear()
         elif event=="chapter_closed":
             print("Chapter closed")
         return {"score":self.score,"events":len(self.events)}
