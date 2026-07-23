@@ -38,7 +38,7 @@ class LearningBackend:
         self.steps.clear()
         self.on_event("chapter_started", category=category)
 
-    def generate_step(self, category, thought):
+    def generate_step(self, category, thought, follow_up=False):
         """Create and store one theory explanation or practice question from a learner prompt."""
         if not isinstance(thought, str) or not thought.strip():
             raise ValueError("Enter what you would like to learn or practise.")
@@ -59,10 +59,15 @@ class LearningBackend:
                 '"sample_answer":"a concise model answer"}.'
             ),
         }
+        follow_up_instruction = (
+            "This is a follow-up item, so make it different from the previous item while staying on the same topic. "
+            if follow_up else ""
+        )
         prompt = (
             f"Subject: {category}\n"
             f"Learner request: {thought.strip()}\n\n"
             f"Create exactly one {expected_type} learning item. {format_instructions[expected_type]} "
+            f"{follow_up_instruction}"
             "Do not return theory, an explanation, or any other type when a question type is requested. "
             "Keep all content accurate, age-appropriate, and relevant."
         )

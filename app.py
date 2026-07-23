@@ -104,13 +104,13 @@ if st.session_state.show_home_dialog:
             st.session_state.show_home_dialog=False
             st.rerun()
 
-st_autorefresh(interval=1000,key="tick")
 step=load_step()
 
 step_time_limit = step.get("time_limit")
 if step_time_limit is not None and st.session_state.end_time is not None:
     remaining = max(0, int(st.session_state.end_time - time.time()))
     timed_out = remaining == 0
+    st_autorefresh(interval=1000, key="tick")
 else:
     remaining = None
     timed_out = False
@@ -158,7 +158,19 @@ if step["type"] == PageType.END:
     st.stop()
 
 def goto_next():
-    st.session_state.step=backend.next_step(st.session_state.step)
+    try:
+        with st.spinner("Creating the next item with Ollama..."):
+            st.session_state.step = backend.generate_step(
+                st.session_state.category,
+                st.session_state.learner_thought,
+                follow_up=True,
+            )
+    except ValueError as error:
+        st.error(str(error))
+        return
+    except OllamaError:
+        st.error("Ollama is unavailable. Check that it is running locally and llama3.2:latest is installed.")
+        return
     st.session_state.end_time=None
     st.session_state.timeout_sent=False
     st.session_state.last_submit=None
