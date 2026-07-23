@@ -1,4 +1,5 @@
 from enum import Enum
+from pathlib import Path
 
 class PageType(Enum):
     CATEGORY="category"
@@ -8,7 +9,9 @@ class PageType(Enum):
     END="end"
 
 class LearningBackend:
-    def __init__(self):
+    def __init__(self, course_path=None):
+        project_path = Path(__file__).resolve().parent
+        self.course_path = project_path / "course" if course_path is None else Path(course_path)
         self.score=0
         self.events=[]
         self.answered_step_ids=set()
@@ -18,6 +21,16 @@ class LearningBackend:
             {"type":PageType.SUBJECTIVE,"question":"Explain why prime numbers are useful.","time_limit":60},
             {"type":PageType.MCQ,"question":"Square root of 81?","options":["7","8","9","10"],"answer":2,"explanation":"9×9=81","time_limit":30},
         ]
+
+    def get_categories(self):
+        """Return visible subject folders from the configured course directory."""
+        if not self.course_path.is_dir():
+            return []
+        return sorted(
+            folder.name
+            for folder in self.course_path.iterdir()
+            if folder.is_dir() and not folder.name.startswith(".")
+        )
 
     def first_step(self):
         return 0

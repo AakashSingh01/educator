@@ -71,17 +71,16 @@ inject_custom_styles()
 if not st.session_state.started:
     st.title("Learning App")
     st.write("Choose a category")
-    
-    cats=["Maths","Science","History", "Test"]
-    cols=st.columns(len(cats))
-    for i,c in enumerate(cats):
-        if cols[i].button(c):
-            reset_chapter(c)
-            st.rerun()
-    topic=st.text_input("Custom topic")
-    if st.button("Start Custom") and topic:
-        reset_chapter(topic)
-        st.rerun()
+
+    categories = backend.get_categories()
+    if not categories:
+        st.info("No subjects found. Add subject folders inside the course directory.")
+    else:
+        cols = st.columns(len(categories))
+        for col, category in zip(cols, categories):
+            if col.button(category, key=f"category_{category}"):
+                reset_chapter(category)
+                st.rerun()
     st.stop()
 
 
