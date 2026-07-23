@@ -1,4 +1,6 @@
 import json
+import random
+import re
 from enum import Enum
 from pathlib import Path
 
@@ -41,26 +43,44 @@ class LearningBackend:
         if not isinstance(thought, str) or not thought.strip():
             raise ValueError("Enter what you would like to learn or practise.")
 
+        expected_type = self._expected_step_type(thought)
+        format_instructions = {
+            "theory": (
+                'Return exactly {"type":"theory","title":"short title",'
+                '"content":"clear concise explanation"}.'
+            ),
+            "mcq": (
+                'Return exactly {"type":"mcq","question":"question",'
+                '"options":["option 1","option 2","option 3","option 4"],'
+                '"answer_index":0,"explanation":"why the answer is correct"}.'
+            ),
+            "subjective": (
+                'Return exactly {"type":"subjective","question":"question",'
+                '"sample_answer":"a concise model answer"}.'
+            ),
+        }
         prompt = (
             f"Subject: {category}\n"
             f"Learner request: {thought.strip()}\n\n"
-            "Decide whether the request is best answered with theory or a practice question. "
-            "Return exactly one JSON object. For theory use: "
-            '{"type":"theory","title":"short title","content":"clear concise explanation"}. '
-            "For practice use: "
-            '{"type":"mcq","question":"question","options":["option 1","option 2","option 3","option 4"],'
-            '"answer_index":0,"explanation":"why the answer is correct"}. '
-            "Use theory for explanation, definition, or concept requests. Use an MCQ when the learner asks "
-            "for a question, quiz, practice, or a similar question. Keep all content accurate, age-appropriate, and relevant."
+            f"Create exactly one {expected_type} learning item. {format_instructions[expected_type]} "
+            "Do not return theory, an explanation, or any other type when a question type is requested. "
+            "Keep all content accurate, age-appropriate, and relevant."
         )
         system_prompt = "You are a helpful education assistant. Return valid JSON only; do not use Markdown fences."
         response = self.llm.chat(prompt, system_prompt=system_prompt)
-        step = self._parse_generated_step(response)
+        step = self._parse_generated_step(response, expected_type)
         self.steps.append(step)
         return len(self.steps) - 1
 
     @staticmethod
-    def _parse_generated_step(response):
+    def _expected_step_type(thought):
+        question_pattern = r"\b(?:questions?|quizzes|practice|tests?|exercises?|problems?|similar)\b"
+        if re.search(question_pattern, thought, flags=re.IGNORECASE):
+            return random.choice(("mcq", "subjective"))
+        return "theory"
+
+    @staticmethod
+    def _parse_generated_step(response, expected_type=None):
         try:
             data = json.loads(response)
         except (TypeError, json.JSONDecodeError) as error:
@@ -69,13 +89,13 @@ class LearningBackend:
             raise ValueError("The model returned an invalid lesson format. Please try again.")
 
         step_type = data.get("type")
-        if step_type == "theory":
+        if step_type == "theory" and expected_type in (None, "theory"):
             title = data.get("title")
             content = data.get("content")
             if isinstance(title, str) and title.strip() and isinstance(content, str) and content.strip():
                 return {"type": PageType.THEORY, "title": title.strip(), "content": content.strip()}
 
-        if step_type == "mcq":
+        if step_type == "mcq" and expected_type in (None, "mcq"):
             question = data.get("question")
             options = data.get("options")
             answer_index = data.get("answer_index")
@@ -99,6 +119,19 @@ class LearningBackend:
                     "options": [option.strip() for option in options],
                     "answer": answer_index,
                     "explanation": explanation.strip(),
+                }
+
+        if step_type == "subjective" and expected_type in (None, "subjective"):
+            question = data.get("question")
+            sample_answer = data.get("sample_answer")
+            if (
+                isinstance(question, str) and question.strip()
+                and isinstance(sample_answer, str) and sample_answer.strip()
+            ):
+                return {
+                    "type": PageType.SUBJECTIVE,
+                    "question": question.strip(),
+                    "sample_answer": sample_answer.strip(),
                 }
 
         raise ValueError("The model returned an incomplete lesson. Please try again.")

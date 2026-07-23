@@ -229,6 +229,7 @@ elif step["type"]==PageType.SUBJECTIVE:
                 "step": st.session_state.step,
                 "status": "success",
                 "message": "Saved",
+                "info": f"Suggested answer: {step.get('sample_answer', 'No sample answer available.')}",
                 "submitted": True,
             }
             st.rerun()
