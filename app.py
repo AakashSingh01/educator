@@ -14,6 +14,7 @@ defaults = {
     "end_time": None,
     "timeout_sent": False,
     "show_home_dialog": False,
+    "last_submit": None,
 }
 for k,v in defaults.items():
     st.session_state.setdefault(k,v)
@@ -32,14 +33,14 @@ def inject_custom_styles():
         <style>
         div[role="radiogroup"] label,
         div[role="radio"] {
-            font-size: 1.4rem !important;
+            font-size: 2.4rem !important;
         }
         .stRadio label,
         .stRadio div[role="radio"] {
-            font-size: 1.4rem !important;
+            font-size: 2.4rem !important;
         }
         .question-title {
-            font-size: 1.75rem;
+            font-size: 2.75rem;
             font-weight: 600;
             margin-bottom: 0.35rem;
         }
@@ -139,7 +140,18 @@ def goto_next():
     st.session_state.step=backend.next_step(st.session_state.step)
     st.session_state.end_time=None
     st.session_state.timeout_sent=False
+    st.session_state.last_submit=None
     st.rerun()
+
+def show_submit_feedback():
+    feedback = st.session_state.last_submit
+    if feedback and feedback.get("step") == st.session_state.step:
+        if feedback["status"] == "success":
+            st.success(feedback["message"])
+        else:
+            st.error(feedback["message"])
+        if feedback.get("info"):
+            st.info(feedback["info"])
 
 if step["type"]==PageType.THEORY:
     st.header(step["title"])
@@ -153,26 +165,38 @@ if step["type"]==PageType.THEORY:
 elif step["type"]==PageType.MCQ:
     st.markdown(f'<div class="question-title">{step["question"]}</div>', unsafe_allow_html=True)
     ans=st.radio("Select",step["options"],disabled=timed_out)
+    show_submit_feedback()
     if timed_out:
         st.error("Time over. Press Next.")
     else:
-        if st.button("Submit"):
+        if st.button("Submit", key="mcq_submit"):
             idx=step["options"].index(ans)
             ok=backend.check_answer(step,idx)
             backend.on_event("answer_submitted",step_id=st.session_state.step,answer=idx,correct=ok,timed_out=False)
-            st.success("Correct" if ok else "Incorrect")
-            st.info(step["explanation"])
-    if st.button("Next"):
+            st.session_state.last_submit = {
+                "step": st.session_state.step,
+                "status": "success" if ok else "error",
+                "message": "Correct" if ok else "Incorrect",
+                "info": step.get("explanation"),
+            }
+            st.experimental_rerun()
+    if st.button("Next", key="mcq_next"):
         goto_next()
 
 elif step["type"]==PageType.SUBJECTIVE:
     st.markdown(f'<div class="question-title">{step["question"]}</div>', unsafe_allow_html=True)
     txt=st.text_area("Answer",disabled=timed_out)
+    show_submit_feedback()
     if timed_out:
         st.error("Time over. Press Next.")
     else:
-        if st.button("Submit"):
+        if st.button("Submit", key="subjective_submit"):
             backend.on_event("answer_submitted",step_id=st.session_state.step,answer=txt,timed_out=False)
-            st.success("Saved")
-    if st.button("Next"):
+            st.session_state.last_submit = {
+                "step": st.session_state.step,
+                "status": "success",
+                "message": "Saved",
+            }
+            st.experimental_rerun()
+    if st.button("Next", key="subjective_next"):
         goto_next()
