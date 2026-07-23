@@ -33,6 +33,7 @@ def reset_chapter(category):
     st.session_state.end_time = None
     st.session_state.timeout_sent = False
     st.session_state.last_submit = None
+    st.session_state.learner_thought = ""
 
 def load_step():
     step = backend.get_step(st.session_state.step)
@@ -80,8 +81,14 @@ if not st.session_state.started:
         cols = st.columns(len(categories))
         for col, category in zip(cols, categories):
             if col.button(category, key=f"category_{category}"):
-                reset_chapter(category)
-                st.rerun()
+                try:
+                    reset_chapter(category)
+                    with st.spinner("Creating your first learning item with Ollama..."):
+                        st.session_state.step = backend.generate_initial_step(category)
+                    st.rerun()
+                except (ValueError, OllamaError) as error:
+                    st.session_state.started = False
+                    st.error(str(error))
     st.stop()
 
 
@@ -132,38 +139,25 @@ with col3:
         st.session_state.show_home_dialog = True
 
 learner_thought = st.text_input(
-    "What would you like to learn or practise?",
-    placeholder="For example: Explain fractions, or give me a similar question about addition.",
+    "Add a comment or ask a follow-up question (optional)",
+    placeholder="For example: Why is that true? Or: give me a similar question.",
     key="learner_thought",
 )
-if st.button("Create lesson", key="create_lesson"):
-    try:
-        with st.spinner("Creating your lesson with Ollama..."):
-            st.session_state.step = backend.generate_step(st.session_state.category, learner_thought)
-        st.session_state.end_time = None
-        st.session_state.timeout_sent = False
-        st.session_state.last_submit = None
-        st.rerun()
-    except ValueError as error:
-        st.error(str(error))
-    except OllamaError:
-        st.error("Ollama is unavailable. Check that it is running locally and llama3.2:latest is installed.")
 
 if timed_out and not st.session_state.timeout_sent:
     backend.on_event("time_expired",step_id=st.session_state.step)
     st.session_state.timeout_sent=True
 
 if step["type"] == PageType.END:
-    st.info("Tell me what you would like to learn, and I will create a lesson or practice question.")
+    st.info("No learning item is available. Return home and select the subject again.")
     st.stop()
 
 def goto_next():
     try:
         with st.spinner("Creating the next item with Ollama..."):
-            st.session_state.step = backend.generate_step(
+            st.session_state.step = backend.generate_follow_up_step(
                 st.session_state.category,
                 st.session_state.learner_thought,
-                follow_up=True,
             )
     except ValueError as error:
         st.error(str(error))

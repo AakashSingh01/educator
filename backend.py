@@ -40,12 +40,12 @@ class LearningBackend:
         self.conversation_history.clear()
         self.on_event("chapter_started", category=category)
 
-    def generate_step(self, category, thought, follow_up=False):
+    def generate_step(self, category, thought, follow_up=False, expected_type=None):
         """Create and store one theory explanation or practice question from a learner prompt."""
         if not isinstance(thought, str) or not thought.strip():
             raise ValueError("Enter what you would like to learn or practise.")
 
-        expected_type = self._expected_step_type(thought)
+        expected_type = expected_type or self._expected_step_type(thought)
         format_instructions = {
             "theory": (
                 'Return exactly {"type":"theory","title":"short title",'
@@ -88,6 +88,31 @@ class LearningBackend:
         ))
         self.conversation_history = self.conversation_history[-4:]
         return len(self.steps) - 1
+
+    def generate_initial_step(self, category):
+        """Create a random first theory item or question for a subject."""
+        return self._generate_random_step(
+            category,
+            "Start this learning session with an engaging introductory item for the subject.",
+        )
+
+    def generate_follow_up_step(self, category, comment):
+        """Use an optional learner comment, or create a random related next item."""
+        if isinstance(comment, str) and comment.strip():
+            return self.generate_step(category, comment, follow_up=True)
+        return self._generate_random_step(
+            category,
+            "Continue with a different, relevant learning item for this subject.",
+            follow_up=True,
+        )
+
+    def _generate_random_step(self, category, instruction, follow_up=False):
+        return self.generate_step(
+            category,
+            instruction,
+            follow_up=follow_up,
+            expected_type=random.choice(("theory", "mcq", "subjective")),
+        )
 
     @staticmethod
     def _expected_step_type(thought):
