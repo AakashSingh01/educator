@@ -5,6 +5,7 @@ from html import escape
 import streamlit as st
 from streamlit_autorefresh import st_autorefresh
 from backend import LearningBackend, PageType
+from llm import OllamaError
 
 st.set_page_config(page_title="Learning App", layout="wide")
 
@@ -25,7 +26,7 @@ if "backend" not in st.session_state:
 backend = st.session_state.backend
 
 def reset_chapter(category):
-    backend.on_event("chapter_started", category=category)
+    backend.start_course(category)
     st.session_state.category = category
     st.session_state.started = True
     st.session_state.step = backend.first_step()
@@ -106,17 +107,6 @@ if st.session_state.show_home_dialog:
 st_autorefresh(interval=1000,key="tick")
 step=load_step()
 
-if step["type"]==PageType.END:
-    st.success("Completed!")
-    if st.button("Restart"):
-        st.session_state.started=False
-        st.session_state.step=backend.first_step()
-        st.session_state.end_time=None
-        st.session_state.timeout_sent=False
-        st.session_state.last_submit=None
-        st.rerun()
-    st.stop()
-
 step_time_limit = step.get("time_limit")
 if step_time_limit is not None and st.session_state.end_time is not None:
     remaining = max(0, int(st.session_state.end_time - time.time()))
@@ -141,9 +131,31 @@ with col3:
     if st.button("🏠 Home", use_container_width=True):
         st.session_state.show_home_dialog = True
 
+learner_thought = st.text_input(
+    "What would you like to learn or practise?",
+    placeholder="For example: Explain fractions, or give me a similar question about addition.",
+    key="learner_thought",
+)
+if st.button("Create lesson", key="create_lesson"):
+    try:
+        with st.spinner("Creating your lesson with Ollama..."):
+            st.session_state.step = backend.generate_step(st.session_state.category, learner_thought)
+        st.session_state.end_time = None
+        st.session_state.timeout_sent = False
+        st.session_state.last_submit = None
+        st.rerun()
+    except ValueError as error:
+        st.error(str(error))
+    except OllamaError:
+        st.error("Ollama is unavailable. Check that it is running locally and llama3.2:latest is installed.")
+
 if timed_out and not st.session_state.timeout_sent:
     backend.on_event("time_expired",step_id=st.session_state.step)
     st.session_state.timeout_sent=True
+
+if step["type"] == PageType.END:
+    st.info("Tell me what you would like to learn, and I will create a lesson or practice question.")
+    st.stop()
 
 def goto_next():
     st.session_state.step=backend.next_step(st.session_state.step)
