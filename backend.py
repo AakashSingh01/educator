@@ -21,6 +21,7 @@ class LearningBackend:
         self.score=0
         self.events=[]
         self.answered_step_ids=set()
+        self.conversation_history=[]
         self.steps=[]
 
     def get_categories(self):
@@ -36,6 +37,7 @@ class LearningBackend:
     def start_course(self, category):
         """Start a fresh, generated learning session for one subject."""
         self.steps.clear()
+        self.conversation_history.clear()
         self.on_event("chapter_started", category=category)
 
     def generate_step(self, category, thought, follow_up=False):
@@ -72,9 +74,19 @@ class LearningBackend:
             "Keep all content accurate, age-appropriate, and relevant."
         )
         system_prompt = "You are a helpful education assistant. Return valid JSON only; do not use Markdown fences."
-        response = self.llm.chat(prompt, system_prompt=system_prompt)
+        # Keep two complete learner/model turns so follow-up questions have context.
+        response = self.llm.chat(
+            prompt,
+            system_prompt=system_prompt,
+            history=self.conversation_history[-4:],
+        )
         step = self._parse_generated_step(response, expected_type)
         self.steps.append(step)
+        self.conversation_history.extend((
+            {"role": "user", "content": thought.strip()},
+            {"role": "assistant", "content": self._step_memory(step)},
+        ))
+        self.conversation_history = self.conversation_history[-4:]
         return len(self.steps) - 1
 
     @staticmethod
@@ -140,6 +152,19 @@ class LearningBackend:
                 }
 
         raise ValueError("The model returned an incomplete lesson. Please try again.")
+
+    @staticmethod
+    def _step_memory(step):
+        """Create compact context that lets the next request refer to this item."""
+        if step["type"] == PageType.THEORY:
+            return f"Theory: {step['title']}. {step['content']}"
+        if step["type"] == PageType.MCQ:
+            correct_answer = step["options"][step["answer"]]
+            return (
+                f"Question: {step['question']} Correct answer: {correct_answer}. "
+                f"Explanation: {step['explanation']}"
+            )
+        return f"Question: {step['question']} Suggested answer: {step['sample_answer']}"
 
     def first_step(self):
         return 0

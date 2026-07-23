@@ -18,10 +18,18 @@ class OllamaListener:
         self.model = model or os.getenv("OLLAMA_MODEL", "llama3.2:latest")
         self.timeout = timeout
 
-    def chat(self, prompt, system_prompt=None):
+    def chat(self, prompt, system_prompt=None, history=None):
         messages = []
         if system_prompt:
             messages.append({"role": "system", "content": system_prompt})
+        for message in history or []:
+            if (
+                isinstance(message, dict)
+                and message.get("role") in {"user", "assistant"}
+                and isinstance(message.get("content"), str)
+                and message["content"].strip()
+            ):
+                messages.append({"role": message["role"], "content": message["content"].strip()})
         messages.append({"role": "user", "content": prompt})
         payload = json.dumps({
             "model": self.model,
