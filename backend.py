@@ -12,7 +12,7 @@ class LearningBackend:
         self.score=0
         self.events=[]
         self.steps=[
-            {"type":PageType.THEORY,"title":"Introduction","content":"Welcome to the chapter. Read before continuing.","time_limit":200},
+            {"type":PageType.THEORY,"title":"Introduction","content":"Welcome to the chapter. Read before continuing."},
             {"type":PageType.MCQ,"question":"2 + 5 = ?","options":["5","6","7","8"],"answer":2,"explanation":"2+5=7","time_limit":30},
             {"type":PageType.SUBJECTIVE,"question":"Explain why prime numbers are useful.","time_limit":60},
             {"type":PageType.MCQ,"question":"Square root of 81?","options":["7","8","9","10"],"answer":2,"explanation":"9×9=81","time_limit":30},

@@ -20,9 +20,38 @@ for k,v in defaults.items():
 
 def load_step():
     step = backend.get_step(st.session_state.step)
-    if step["type"] != PageType.END and st.session_state.end_time is None:
-        st.session_state.end_time = time.time()+step["time_limit"]
+    if step["type"] != PageType.END:
+        time_limit = step.get("time_limit")
+        if st.session_state.end_time is None and time_limit is not None:
+            st.session_state.end_time = time.time() + time_limit
     return step
+
+def inject_custom_styles():
+    st.markdown(
+        """
+        <style>
+        div[role="radiogroup"] label,
+        div[role="radio"] {
+            font-size: 1.4rem !important;
+        }
+        .stRadio label,
+        .stRadio div[role="radio"] {
+            font-size: 1.4rem !important;
+        }
+        .question-title {
+            font-size: 1.75rem;
+            font-weight: 600;
+            margin-bottom: 0.35rem;
+        }
+        .stTextArea label {
+            font-size: 1.15rem !important;
+        }
+        </style>
+        """,
+        unsafe_allow_html=True,
+    )
+
+inject_custom_styles()
 
 if not st.session_state.started:
     st.title("Learning App")
@@ -78,8 +107,13 @@ if step["type"]==PageType.END:
         st.rerun()
     st.stop()
 
-remaining=max(0,int(st.session_state.end_time-time.time()))
-timed_out=remaining==0
+step_time_limit = step.get("time_limit")
+if step_time_limit is not None and st.session_state.end_time is not None:
+    remaining = max(0, int(st.session_state.end_time - time.time()))
+    timed_out = remaining == 0
+else:
+    remaining = None
+    timed_out = False
 
 # Header
 col1, col2, col3 = st.columns([6, 2, 1])
@@ -88,13 +122,14 @@ with col1:
     st.subheader(f"📚 {st.session_state.category}")
 
 with col2:
-    st.metric("Time Left", f"{remaining}s")
+    if remaining is None:
+        st.metric("Time Left", "Unlimited")
+    else:
+        st.metric("Time Left", f"{remaining}s")
 
 with col3:
     if st.button("🏠 Home", use_container_width=True):
         st.session_state.show_home_dialog = True
-
-st.metric("Time Left",f"{remaining}s")
 
 if timed_out and not st.session_state.timeout_sent:
     backend.on_event("time_expired",step_id=st.session_state.step)
@@ -116,7 +151,7 @@ if step["type"]==PageType.THEORY:
         goto_next()
 
 elif step["type"]==PageType.MCQ:
-    st.header(step["question"])
+    st.markdown(f'<div class="question-title">{step["question"]}</div>', unsafe_allow_html=True)
     ans=st.radio("Select",step["options"],disabled=timed_out)
     if timed_out:
         st.error("Time over. Press Next.")
@@ -131,7 +166,7 @@ elif step["type"]==PageType.MCQ:
         goto_next()
 
 elif step["type"]==PageType.SUBJECTIVE:
-    st.header(step["question"])
+    st.markdown(f'<div class="question-title">{step["question"]}</div>', unsafe_allow_html=True)
     txt=st.text_area("Answer",disabled=timed_out)
     if timed_out:
         st.error("Time over. Press Next.")
