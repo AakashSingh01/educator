@@ -236,14 +236,28 @@ elif step["type"]==PageType.SUBJECTIVE:
         st.error("Time over. Press Next.")
     else:
         if st.button("Submit", key="subjective_submit", disabled=already_submitted()):
-            backend.on_event("answer_submitted",step_id=st.session_state.step,answer=txt,timed_out=False)
-            st.session_state.last_submit = {
-                "step": st.session_state.step,
-                "status": "success",
-                "message": "Saved",
-                "info": f"Suggested answer: {step.get('sample_answer', 'No sample answer available.')}",
-                "submitted": True,
-            }
-            st.rerun()
+            try:
+                with st.spinner("Checking your answer with Ollama..."):
+                    assessment = backend.evaluate_subjective_answer(
+                        st.session_state.category,
+                        step,
+                        txt,
+                    )
+                backend.on_event("answer_submitted",step_id=st.session_state.step,answer=txt,timed_out=False)
+                st.session_state.last_submit = {
+                    "step": st.session_state.step,
+                    "status": "success" if assessment["correct"] else "error",
+                    "message": "Correct" if assessment["correct"] else "Not quite",
+                    "info": (
+                        f"{assessment['feedback']}\n\n"
+                        f"Suggested answer: {step.get('sample_answer', 'No sample answer available.')}"
+                    ),
+                    "submitted": True,
+                }
+                st.rerun()
+            except ValueError as error:
+                st.error(str(error))
+            except OllamaError:
+                st.error("Ollama is unavailable. Check that it is running locally and llama3.2:latest is installed.")
     if st.button("Next", key="subjective_next"):
         goto_next()

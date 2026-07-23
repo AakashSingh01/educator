@@ -190,6 +190,39 @@ class LearningBackend:
             return False
         return selected == answer
 
+    def evaluate_subjective_answer(self, category, step, answer):
+        """Use Ollama to assess a free-text answer against the generated model answer."""
+        if not isinstance(step, dict) or step.get("type") != PageType.SUBJECTIVE:
+            raise ValueError("This is not a subjective question.")
+        if not isinstance(answer, str) or not answer.strip():
+            raise ValueError("Enter an answer before submitting.")
+
+        prompt = (
+            f"Subject: {category}\n"
+            f"Question: {step['question']}\n"
+            f"Model answer: {step['sample_answer']}\n"
+            f"Learner answer: {answer.strip()}\n\n"
+            "Assess whether the learner answer is substantively correct. Accept equivalent wording and do not "
+            "penalize minor grammar or spelling errors. Return exactly this JSON object: "
+            '{"correct":true,"feedback":"brief helpful feedback"}. '
+            "Set correct to false when the answer is missing a key idea or is incorrect."
+        )
+        response = self.llm.chat(
+            prompt,
+            system_prompt="You are a fair educational assessor. Return valid JSON only; do not use Markdown fences.",
+            history=self.conversation_history[-4:],
+        )
+        try:
+            result = json.loads(response)
+        except (TypeError, json.JSONDecodeError) as error:
+            raise ValueError("The model could not assess this answer. Please try again.") from error
+
+        correct = result.get("correct") if isinstance(result, dict) else None
+        feedback = result.get("feedback") if isinstance(result, dict) else None
+        if not isinstance(correct, bool) or not isinstance(feedback, str) or not feedback.strip():
+            raise ValueError("The model returned an invalid assessment. Please try again.")
+        return {"correct": correct, "feedback": feedback.strip()}
+
     def on_event(self,event,**kwargs):
         self.events.append({"event":event,**kwargs})
         if event=="answer_submitted":
