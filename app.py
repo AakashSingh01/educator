@@ -577,7 +577,7 @@ def render_ask_box(step):
                 st.write(message["content"])
 
     with st.form(f"ask_form_{st.session_state.step}", clear_on_submit=True):
-        question = st.text_input("Ask", placeholder="Why is this answer correct?")
+        question = st.text_input("chat and counter question here:", placeholder="Why is this answer correct?")
         submitted = st.form_submit_button("Ask", on_click=mark_generating)
     if submitted:
         try:
@@ -607,7 +607,6 @@ elif step["type"]==PageType.MCQ:
     st.markdown(f'<div class="question-title">{escape(step["question"])}</div>', unsafe_allow_html=True)
     ans=st.radio("Select",step["options"],disabled=timed_out)
     show_submit_feedback()
-    render_ask_box(step)
     if timed_out:
         st.error("Time over. Press Next.")
     else:
@@ -635,13 +634,13 @@ elif step["type"]==PageType.MCQ:
             st.rerun()
     if st.button("Next", key="mcq_next", on_click=mark_generating):
         goto_next()
+    render_ask_box(step)
 
 elif step["type"]==PageType.SUBJECTIVE:
     st.caption(f"Question scope: {backend.get_learning_context_label() or st.session_state.category}")
     st.markdown(f'<div class="question-title">{escape(step["question"])}</div>', unsafe_allow_html=True)
     txt=st.text_area("Answer",disabled=timed_out)
     show_submit_feedback()
-    render_ask_box(step)
     if timed_out:
         st.error("Time over. Press Next.")
     else:
@@ -674,3 +673,4 @@ elif step["type"]==PageType.SUBJECTIVE:
                 st.error("The configured AI provider is unavailable. Check its connection and model settings.")
     if st.button("Next", key="subjective_next", on_click=mark_generating):
         goto_next()
+    render_ask_box(step)
