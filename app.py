@@ -73,21 +73,28 @@ def render_learning_setup():
         format_func=lambda scope: "Full subject (random prepared note)" if not scope else scope,
         key=f"setup_scope_{subject}",
     )
-    session_mode = st.radio(
-        "Study mode",
-        options=["Question mode", "Learning mode"],
-        horizontal=True,
-        key=f"setup_mode_{subject}",
+    st.subheader("Include item types")
+    type_columns = st.columns(3)
+    include_objective = type_columns[0].checkbox("Objective", value=True, key=f"setup_objective_{subject}")
+    include_subjective = type_columns[1].checkbox("Subjective", value=True, key=f"setup_subjective_{subject}")
+    include_theory = type_columns[2].checkbox("Theory", value=False, key=f"setup_theory_{subject}")
+    allowed_types = tuple(
+        item_type for enabled, item_type in (
+            (include_objective, "mcq"),
+            (include_subjective, "subjective"),
+            (include_theory, "theory"),
+        ) if enabled
     )
 
-    if session_mode == "Question mode":
-        question_mode = st.radio(
-            "Questions",
-            options=list(QUESTION_MODE_TYPES),
-            horizontal=True,
-            key=f"question_mode_{subject}",
-        )
-        allowed_types = QUESTION_MODE_TYPES[question_mode]
+    learning_mode = st.checkbox(
+        "Learning mode (use infinite time)",
+        key=f"setup_learning_mode_{subject}",
+        help="Learning mode keeps every selected item type untimed.",
+    )
+    if learning_mode:
+        timer_preset = "Infinite"
+        st.info("Learning mode uses infinite time for all selected item types.")
+    else:
         timer_preset = st.selectbox(
             "Timer",
             options=list(TIMER_PRESETS),
@@ -95,17 +102,6 @@ def render_learning_setup():
             key=f"timer_preset_{subject}",
         )
         st.caption("Slow: 2 min objective / 4 min subjective · Normal: 1 min / 2 min · Fast: 30 sec / 1 min")
-    else:
-        selected_items = st.multiselect(
-            "Include",
-            options=["Objective", "Subjective", "Theory"],
-            default=["Objective", "Subjective", "Theory"],
-            key=f"learning_items_{subject}",
-        )
-        type_map = {"Objective": "mcq", "Subjective": "subjective", "Theory": "theory"}
-        allowed_types = tuple(type_map[item] for item in selected_items)
-        timer_preset = "Infinite"
-        st.info("Learning mode uses infinite time for all selected item types.")
 
     if st.button("Start learning", type="primary", use_container_width=True, key="start_configured_learning"):
         try:
