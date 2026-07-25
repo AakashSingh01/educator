@@ -365,6 +365,14 @@ def inject_custom_styles():
             color: {UI_COLORS["ink"]};
             font-size: {FONT_SIZES["body"]};
         }}
+        [data-testid="stHeader"] {{
+            background: rgba(245, 247, 251, 0.94) !important;
+            border-bottom: 1px solid {UI_COLORS["border"]};
+        }}
+        [data-testid="stToolbar"], [data-testid="stDecoration"] {{
+            background: transparent !important;
+            color: {UI_COLORS["ink"]} !important;
+        }}
         .block-container {{
             max-width: 1180px;
             padding-top: 2.25rem;
@@ -406,24 +414,25 @@ def inject_custom_styles():
         .stButton > button[kind="primary"] {{
             background: {UI_COLORS["primary"]};
             border-color: {UI_COLORS["primary"]};
-            color: #FFFFFF;
+            color: {UI_COLORS["primary_text"]};
         }}
+        .stButton > button[kind="primary"] * {{ color: {UI_COLORS["primary_text"]} !important; }}
         .stButton > button[kind="primary"]:hover {{
             background: {UI_COLORS["primary_hover"]};
             border-color: {UI_COLORS["primary_hover"]};
-            color: #FFFFFF;
+            color: {UI_COLORS["primary_text"]};
         }}
         .stFormSubmitButton > button {{
             background: {UI_COLORS["primary"]};
             border-color: {UI_COLORS["primary"]};
-            color: #FFFFFF !important;
+            color: {UI_COLORS["primary_text"]} !important;
             font-weight: 600;
         }}
-        .stFormSubmitButton > button * {{ color: #FFFFFF !important; }}
+        .stFormSubmitButton > button * {{ color: {UI_COLORS["primary_text"]} !important; }}
         .stFormSubmitButton > button:hover {{
             background: {UI_COLORS["primary_hover"]};
             border-color: {UI_COLORS["primary_hover"]};
-            color: #FFFFFF !important;
+            color: {UI_COLORS["primary_text"]} !important;
         }}
         .stTextInput input, .stTextArea textarea {{
             background: rgba(255, 255, 255, 0.92) !important;
@@ -633,7 +642,7 @@ if step["type"]==PageType.THEORY:
     st.write(step["content"])
     if timed_out:
         st.warning("Reading time finished.")
-    if st.button("Next", on_click=mark_generating):
+    if st.button("Next", type="primary", on_click=mark_generating):
         backend.on_event("theory_completed",step_id=st.session_state.step)
         goto_next()
 
@@ -667,7 +676,7 @@ elif step["type"]==PageType.MCQ:
                     "message": "This question could not be submitted. Please continue to the next question.",
                 }
             st.rerun()
-    if st.button("Next", key="mcq_next", on_click=mark_generating):
+    if st.button("Next", key="mcq_next", type="primary", on_click=mark_generating):
         goto_next()
     render_ask_box(step)
 
@@ -706,6 +715,6 @@ elif step["type"]==PageType.SUBJECTIVE:
             except LLMError:
                 st.session_state.is_generating = False
                 st.error("The configured AI provider is unavailable. Check its connection and model settings.")
-    if st.button("Next", key="subjective_next", on_click=mark_generating):
+    if st.button("Next", key="subjective_next", type="primary", on_click=mark_generating):
         goto_next()
     render_ask_box(step)
