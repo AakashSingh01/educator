@@ -7,10 +7,10 @@
   ],
   "max_depth": 10,
   "queue": [
+    "Deep Learning in Data Science/Convolutional Neural Networks (CNNs) in Image Analysis",
     "Deep Learning in Data Science/Convolutional Neural Networks (CNNs) in Image Analysis/Dropout Regularization in CNNs",
-    "Deep Learning in Data Science/Convolutional Neural Networks (CNNs) in Image Analysis/Activation Functions in CNNs",
+    "Deep Learning in Data Science/Convolutional Neural Networks (CNNs) in Image Analysis/Activation Functions",
     "Deep Learning in Data Science/Convolutional Neural Networks (CNNs) in Image Analysis/Batch Normalization in CNNs",
-    "Deep Learning in Data Science/Convolutional Neural Networks (CNNs) in Image Analysis/CNN Architectures for Image Segmentation",
     "Deep Learning in Data Science/Convolutional Neural Networks (CNNs) in Image Analysis/CNN Architectures for Object Detection",
     "Deep Learning in Data Science/Convolutional Neural Networks (CNNs) in Image Analysis/Image Classification with CNNs",
     "Deep Learning in Data Science/Convolutional Neural Networks (CNNs) in Image Analysis/Advantages and Disadvantages of Using CNNs in Data Science",
