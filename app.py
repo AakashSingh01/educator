@@ -6,6 +6,7 @@ import streamlit as st
 from streamlit_autorefresh import st_autorefresh
 from backend import LearningBackend, PageType
 from llm import LLMError
+from ui_config import FONT_SIZES
 
 st.set_page_config(page_title="Learning App", layout="wide")
 
@@ -249,23 +250,23 @@ def load_step():
 
 def inject_custom_styles():
     st.markdown(
-        """
+        f"""
         <style>
         div[role="radiogroup"] label,
         div[role="radio"] {
-            font-size: 2.4rem !important;
+            font-size: {FONT_SIZES["radio_option"]} !important;
         }
         .stRadio label,
         .stRadio div[role="radio"] {
-            font-size: 2.4rem !important;
+            font-size: {FONT_SIZES["radio_option"]} !important;
         }
         .question-title {
-            font-size: 2.75rem;
+            font-size: {FONT_SIZES["question"]};
             font-weight: 600;
             margin-bottom: 0.35rem;
         }
         .stTextArea label {
-            font-size: 1.15rem !important;
+            font-size: {FONT_SIZES["text_area_label"]} !important;
         }
         </style>
         """,
