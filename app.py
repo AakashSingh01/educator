@@ -24,6 +24,7 @@ defaults = {
     "setup_subject": None,
     "learning_timer": "Normal",
     "learning_types": list(QUESTION_MODE_TYPES["Both"]),
+    "is_generating": False,
 }
 for k,v in defaults.items():
     st.session_state.setdefault(k,v)
@@ -42,6 +43,7 @@ def reset_chapter(category, scope="", allowed_types=None, timer_preset="Normal")
     st.session_state.timeout_sent = False
     st.session_state.last_submit = None
     st.session_state.learner_thought = ""
+    st.session_state.is_generating = False
     st.session_state.learning_timer = timer_preset
     st.session_state.learning_types = list(allowed_types)
 
@@ -56,6 +58,11 @@ def start_learning_scope(scope):
     st.session_state.end_time = None
     st.session_state.timeout_sent = False
     st.session_state.last_submit = None
+    st.session_state.is_generating = False
+
+def mark_generating():
+    """Pause timed auto-refresh before an LLM-backed button action runs."""
+    st.session_state.is_generating = True
 
 def render_learning_setup():
     subject = st.session_state.setup_subject
@@ -490,7 +497,8 @@ step_time_limit = step.get("time_limit")
 if step_time_limit is not None and st.session_state.end_time is not None:
     remaining = max(0, int(st.session_state.end_time - time.time()))
     timed_out = remaining == 0
-    st_autorefresh(interval=1000, key="tick")
+    if not st.session_state.is_generating:
+        st_autorefresh(interval=1000, key="tick")
 else:
     remaining = None
     timed_out = False
@@ -521,12 +529,13 @@ selected_scope = st.selectbox(
     format_func=lambda scope: "Full subject (random prepared note)" if not scope else scope,
     key=f"learning_scope_{st.session_state.category}",
 )
-if st.button("Use selected learning area", key="use_learning_scope"):
+if st.button("Use selected learning area", key="use_learning_scope", on_click=mark_generating):
     try:
         with st.spinner("Creating a learning item from the selected notes..."):
             start_learning_scope(selected_scope)
         st.rerun()
     except (ValueError, LLMError) as error:
+        st.session_state.is_generating = False
         st.error(str(error))
 
 learner_thought = st.text_input(
@@ -551,14 +560,17 @@ def goto_next():
                 st.session_state.learner_thought,
             )
     except ValueError as error:
+        st.session_state.is_generating = False
         st.error(str(error))
         return
     except LLMError:
+        st.session_state.is_generating = False
         st.error("The configured AI provider is unavailable. Check its connection and model settings.")
         return
     st.session_state.end_time=None
     st.session_state.timeout_sent=False
     st.session_state.last_submit=None
+    st.session_state.is_generating=False
     st.rerun()
 
 def show_submit_feedback():
@@ -580,7 +592,7 @@ if step["type"]==PageType.THEORY:
     st.write(step["content"])
     if timed_out:
         st.warning("Reading time finished.")
-    if st.button("Next"):
+    if st.button("Next", on_click=mark_generating):
         backend.on_event("theory_completed",step_id=st.session_state.step)
         goto_next()
 
@@ -614,7 +626,7 @@ elif step["type"]==PageType.MCQ:
                     "message": "This question could not be submitted. Please continue to the next question.",
                 }
             st.rerun()
-    if st.button("Next", key="mcq_next"):
+    if st.button("Next", key="mcq_next", on_click=mark_generating):
         goto_next()
 
 elif step["type"]==PageType.SUBJECTIVE:
@@ -625,7 +637,7 @@ elif step["type"]==PageType.SUBJECTIVE:
     if timed_out:
         st.error("Time over. Press Next.")
     else:
-        if st.button("Submit", key="subjective_submit", disabled=already_submitted()):
+        if st.button("Submit", key="subjective_submit", disabled=already_submitted(), on_click=mark_generating):
             try:
                 with st.spinner("Checking your answer..."):
                     assessment = backend.evaluate_subjective_answer(
@@ -644,10 +656,13 @@ elif step["type"]==PageType.SUBJECTIVE:
                     ),
                     "submitted": True,
                 }
+                st.session_state.is_generating = False
                 st.rerun()
             except ValueError as error:
+                st.session_state.is_generating = False
                 st.error(str(error))
             except LLMError:
+                st.session_state.is_generating = False
                 st.error("The configured AI provider is unavailable. Check its connection and model settings.")
-    if st.button("Next", key="subjective_next"):
+    if st.button("Next", key="subjective_next", on_click=mark_generating):
         goto_next()
