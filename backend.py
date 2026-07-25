@@ -24,6 +24,7 @@ class LearningBackend:
         self.answered_step_ids=set()
         self.conversation_history=[]
         self.steps=[]
+        self.learning_context=None
 
     def get_categories(self):
         """Return visible subject folders from the configured course directory."""
@@ -312,7 +313,34 @@ class LearningBackend:
         """Start a fresh, generated learning session for one subject."""
         self.steps.clear()
         self.conversation_history.clear()
+        self.learning_context = self._select_learning_context(category)
         self.on_event("chapter_started", category=category)
+
+    def _select_learning_context(self, subject):
+        """Choose the subject overview or one prepared subtopic as the lesson scope."""
+        root = self.course_path / self._folder_name(subject)
+        candidates = [{"label": subject, "notes": ""}]
+        if root.is_dir():
+            root_notes = root / "notes.txt"
+            if root_notes.is_file():
+                try:
+                    candidates[0]["notes"] = root_notes.read_text(encoding="utf-8").strip()
+                except OSError:
+                    pass
+            for notes_path in root.rglob("notes.txt"):
+                if notes_path.parent == root or any(part.startswith(".") for part in notes_path.relative_to(root).parts):
+                    continue
+                try:
+                    notes = notes_path.read_text(encoding="utf-8").strip()
+                except OSError:
+                    continue
+                if notes:
+                    relative_topic = notes_path.parent.relative_to(root)
+                    candidates.append({"label": f"{subject} / {relative_topic}", "notes": notes})
+        return random.choice(candidates)
+
+    def get_learning_context_label(self):
+        return self.learning_context["label"] if self.learning_context else None
 
     def generate_step(self, category, thought, follow_up=False, expected_type=None):
         """Create and store one theory explanation or practice question from a learner prompt."""
@@ -341,9 +369,12 @@ class LearningBackend:
         )
         prompt = (
             f"Subject: {category}\n"
+            f"Selected study scope: {self.get_learning_context_label() or category}\n"
+            f"Prepared notes for this scope:\n{self._learning_context_notes()}\n\n"
             f"Learner request: {thought.strip()}\n\n"
             f"Create exactly one {expected_type} learning item. {format_instructions[expected_type]} "
             f"{follow_up_instruction}"
+            "Base the item on the prepared notes when they are available, and keep it within the selected study scope. "
             "Do not return theory, an explanation, or any other type when a question type is requested. "
             "Keep all content accurate, age-appropriate, and relevant."
         )
@@ -362,6 +393,12 @@ class LearningBackend:
         ))
         self.conversation_history = self.conversation_history[-4:]
         return len(self.steps) - 1
+
+    def _learning_context_notes(self):
+        if not self.learning_context or not self.learning_context.get("notes"):
+            return "No saved notes are available; use the selected subject scope."
+        # Keep prompts bounded while retaining enough detail for focused questions.
+        return self.learning_context["notes"][:8000]
 
     def generate_initial_step(self, category):
         """Create a random first theory item or question for a subject."""

@@ -1,0 +1,18 @@
+# Deep Learning in Data Science
+## Overview
+Deep learning is a subset of machine learning that specializes in the training of artificial neural networks to learn from data.
+
+## Core Ideas
+- **Artificial Neural Networks (ANNs)**: Inspired by human brains, ANNs are composed of interconnected nodes (neurons) that process inputs and produce outputs.
+- **Backpropagation**: An optimization algorithm used to train ANNs by minimizing the error between predicted and actual outputs.
+- **Convolutional Neural Networks (CNNs)**: Designed for image and video analysis, CNNs use convolutional and pooling layers to extract features from data.
+
+## Terminology
+- **Activation Functions**: Introduce non-linearity in ANN inputs, e.g., ReLU (Rectified Linear Unit) or Sigmoid.
+- **Batch Normalization**: Normalizes input data for each layer, enhancing stability and speed during training.
+- **Transfer Learning**: Pre-trained model's weights are used as a starting point for a new, but related task.
+
+## Relationships
+- **Supervised Learning**: ANNs learn from labeled datasets to predict outputs.
+- **Unsupervised Learning**: ANNs discover patterns in unlabeled data or group similar inputs together.
+- **Reinforcement Learning**: ANNs learn by interacting with an environment and receiving rewards or penalties for actions taken.

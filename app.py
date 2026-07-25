@@ -334,6 +334,9 @@ col1, col2, col3 = st.columns([6, 2, 1])
 
 with col1:
     st.subheader(f"📚 {st.session_state.category}")
+    learning_scope = backend.get_learning_context_label()
+    if learning_scope:
+        st.caption(f"Learning focus: {learning_scope}")
 
 with col2:
     if remaining is None:
