@@ -37,6 +37,13 @@ def reset_chapter(category):
     st.session_state.last_submit = None
     st.session_state.learner_thought = ""
 
+def start_learning_scope(scope):
+    backend.start_course(st.session_state.category, scope)
+    st.session_state.step = backend.generate_initial_step(st.session_state.category)
+    st.session_state.end_time = None
+    st.session_state.timeout_sent = False
+    st.session_state.last_submit = None
+
 def render_notes_preparation():
     st.title("Prepare Notes")
     st.caption("Review each topic, choose its direct subtopics, and build the notes structure depth-first.")
@@ -348,6 +355,21 @@ with col3:
     if st.button("🏠 Home", use_container_width=True):
         st.session_state.show_home_dialog = True
 
+learning_scopes = backend.get_learning_scopes(st.session_state.category)
+selected_scope = st.selectbox(
+    "Learning area",
+    options=learning_scopes,
+    format_func=lambda scope: "Full subject (random prepared note)" if not scope else scope,
+    key=f"learning_scope_{st.session_state.category}",
+)
+if st.button("Use selected learning area", key="use_learning_scope"):
+    try:
+        with st.spinner("Creating a learning item from the selected notes..."):
+            start_learning_scope(selected_scope)
+        st.rerun()
+    except (ValueError, LLMError) as error:
+        st.error(str(error))
+
 learner_thought = st.text_input(
     "Add a comment or ask a follow-up question (optional)",
     placeholder="For example: Why is that true? Or: give me a similar question.",
@@ -404,6 +426,7 @@ if step["type"]==PageType.THEORY:
         goto_next()
 
 elif step["type"]==PageType.MCQ:
+    st.caption(f"Question scope: {backend.get_learning_context_label() or st.session_state.category}")
     st.markdown(f'<div class="question-title">{escape(step["question"])}</div>', unsafe_allow_html=True)
     ans=st.radio("Select",step["options"],disabled=timed_out)
     show_submit_feedback()
@@ -433,6 +456,7 @@ elif step["type"]==PageType.MCQ:
         goto_next()
 
 elif step["type"]==PageType.SUBJECTIVE:
+    st.caption(f"Question scope: {backend.get_learning_context_label() or st.session_state.category}")
     st.markdown(f'<div class="question-title">{escape(step["question"])}</div>', unsafe_allow_html=True)
     txt=st.text_area("Answer",disabled=timed_out)
     show_submit_feedback()

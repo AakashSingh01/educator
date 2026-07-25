@@ -309,26 +309,37 @@ class LearningBackend:
         self._save_notes_progress(subject, session)
         return self.get_notes_progress(subject)
 
-    def start_course(self, category):
+    def start_course(self, category, scope=""):
         """Start a fresh, generated learning session for one subject."""
         self.steps.clear()
         self.conversation_history.clear()
-        self.learning_context = self._select_learning_context(category)
+        self.learning_context = self.select_learning_context(category, scope)
         self.on_event("chapter_started", category=category)
 
-    def _select_learning_context(self, subject):
-        """Choose the subject overview or one prepared subtopic as the lesson scope."""
+    def get_learning_scopes(self, subject):
+        """Return the full subject and every saved subtopic folder as selectable scopes."""
         root = self.course_path / self._folder_name(subject)
-        candidates = [{"label": subject, "notes": ""}]
-        if root.is_dir():
-            root_notes = root / "notes.txt"
-            if root_notes.is_file():
-                try:
-                    candidates[0]["notes"] = root_notes.read_text(encoding="utf-8").strip()
-                except OSError:
-                    pass
-            for notes_path in root.rglob("notes.txt"):
-                if notes_path.parent == root or any(part.startswith(".") for part in notes_path.relative_to(root).parts):
+        if not root.is_dir():
+            return [""]
+        scopes = [""]
+        for folder in root.rglob("*"):
+            if folder.is_dir():
+                relative = folder.relative_to(root)
+                if not any(part.startswith(".") for part in relative.parts):
+                    scopes.append(str(relative))
+        return sorted(set(scopes), key=lambda path: (len(Path(path).parts), path.casefold()))
+
+    def select_learning_context(self, subject, scope=""):
+        """Randomly choose one notes file from the chosen subject or subtopic scope."""
+        root = self.course_path / self._folder_name(subject)
+        if scope not in self.get_learning_scopes(subject):
+            raise ValueError("Choose a valid subject or subtopic scope.")
+        scope_folder = root / Path(scope)
+        candidates = []
+        if scope_folder.is_dir():
+            for notes_path in scope_folder.rglob("notes.txt"):
+                relative = notes_path.relative_to(root)
+                if any(part.startswith(".") for part in relative.parts):
                     continue
                 try:
                     notes = notes_path.read_text(encoding="utf-8").strip()
@@ -336,7 +347,11 @@ class LearningBackend:
                     continue
                 if notes:
                     relative_topic = notes_path.parent.relative_to(root)
-                    candidates.append({"label": f"{subject} / {relative_topic}", "notes": notes})
+                    label = subject if not relative_topic.parts else f"{subject} / {relative_topic}"
+                    candidates.append({"label": label, "notes": notes})
+        if not candidates:
+            label = subject if not scope else f"{subject} / {scope}"
+            return {"label": label, "notes": ""}
         return random.choice(candidates)
 
     def get_learning_context_label(self):
