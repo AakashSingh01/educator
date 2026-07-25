@@ -263,21 +263,21 @@ def inject_custom_styles():
         f"""
         <style>
         div[role="radiogroup"] label,
-        div[role="radio"] {
+        div[role="radio"] {{
             font-size: {FONT_SIZES["radio_option"]} !important;
-        }
+        }}
         .stRadio label,
-        .stRadio div[role="radio"] {
+        .stRadio div[role="radio"] {{
             font-size: {FONT_SIZES["radio_option"]} !important;
-        }
-        .question-title {
+        }}
+        .question-title {{
             font-size: {FONT_SIZES["question"]};
             font-weight: 600;
             margin-bottom: 0.35rem;
-        }
-        .stTextArea label {
+        }}
+        .stTextArea label {{
             font-size: {FONT_SIZES["text_area_label"]} !important;
-        }
+        }}
         </style>
         """,
         unsafe_allow_html=True,
