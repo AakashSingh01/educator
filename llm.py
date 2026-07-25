@@ -1,12 +1,24 @@
-"""Small client for a locally hosted Ollama model."""
+"""LLM client interface and the default local Ollama implementation."""
 
 import json
 import os
+from typing import Protocol
 from urllib.error import HTTPError, URLError
 from urllib.request import Request, urlopen
 
 
-class OllamaError(RuntimeError):
+class LLMError(RuntimeError):
+    """Raised when the configured language-model provider cannot respond."""
+
+
+class LLMClient(Protocol):
+    """Minimal interface required by the learning and notes backend."""
+
+    def chat(self, prompt, system_prompt=None, history=None):
+        """Return a text response for the supplied conversation."""
+
+
+class OllamaError(LLMError):
     """Raised when Ollama cannot provide a usable response."""
 
 

@@ -5,7 +5,7 @@ from html import escape
 import streamlit as st
 from streamlit_autorefresh import st_autorefresh
 from backend import LearningBackend, PageType
-from llm import OllamaError
+from llm import LLMError
 
 st.set_page_config(page_title="Learning App", layout="wide")
 
@@ -109,15 +109,15 @@ def render_notes_preparation():
         placeholder="For example: add a worked example, simplify the language, or focus on definitions.",
         key=instruction_key,
     )
-    generate_label = "Regenerate notes with Ollama" if topic["notes"] else "Generate notes with Ollama"
+    generate_label = "Regenerate notes" if topic["notes"] else "Generate notes"
     if st.button(generate_label, key=f"generate_{safe_topic_key}"):
         try:
-            with st.spinner("Drafting notes with Ollama..."):
+            with st.spinner("Drafting notes..."):
                 st.session_state[draft_key] = backend.generate_topic_notes(
                     subject, topic["relative_path"], note_instruction
                 )
             st.rerun()
-        except (ValueError, OllamaError) as error:
+        except (ValueError, LLMError) as error:
             st.error(str(error))
 
     notes_draft = st.text_area(
@@ -144,12 +144,12 @@ def render_notes_preparation():
             st.rerun()
         return
 
-    if st.button("Suggest subtopics with Ollama", key=f"suggest_{safe_topic_key}"):
+    if st.button("Suggest subtopics", key=f"suggest_{safe_topic_key}"):
         try:
             with st.spinner("Finding focused direct subtopics..."):
                 st.session_state[suggestions_key] = backend.suggest_subtopics(subject, topic["relative_path"])
             st.rerun()
-        except (ValueError, OllamaError) as error:
+        except (ValueError, LLMError) as error:
             st.error(str(error))
 
     suggestions = st.session_state.get(suggestions_key, [])
@@ -232,10 +232,10 @@ if not st.session_state.started:
             if col.button(category, key=f"category_{category}"):
                 try:
                     reset_chapter(category)
-                    with st.spinner("Creating your first learning item with Ollama..."):
+                    with st.spinner("Creating your first learning item..."):
                         st.session_state.step = backend.generate_initial_step(category)
                     st.rerun()
-                except (ValueError, OllamaError) as error:
+                except (ValueError, LLMError) as error:
                     st.session_state.started = False
                     st.error(str(error))
     st.stop()
@@ -303,7 +303,7 @@ if step["type"] == PageType.END:
 
 def goto_next():
     try:
-        with st.spinner("Creating the next item with Ollama..."):
+        with st.spinner("Creating the next item..."):
             st.session_state.step = backend.generate_follow_up_step(
                 st.session_state.category,
                 st.session_state.learner_thought,
@@ -311,8 +311,8 @@ def goto_next():
     except ValueError as error:
         st.error(str(error))
         return
-    except OllamaError:
-        st.error("Ollama is unavailable. Check that it is running locally and llama3.2:latest is installed.")
+    except LLMError:
+        st.error("The configured AI provider is unavailable. Check its connection and model settings.")
         return
     st.session_state.end_time=None
     st.session_state.timeout_sent=False
@@ -380,7 +380,7 @@ elif step["type"]==PageType.SUBJECTIVE:
     else:
         if st.button("Submit", key="subjective_submit", disabled=already_submitted()):
             try:
-                with st.spinner("Checking your answer with Ollama..."):
+                with st.spinner("Checking your answer..."):
                     assessment = backend.evaluate_subjective_answer(
                         st.session_state.category,
                         step,
@@ -400,7 +400,7 @@ elif step["type"]==PageType.SUBJECTIVE:
                 st.rerun()
             except ValueError as error:
                 st.error(str(error))
-            except OllamaError:
-                st.error("Ollama is unavailable. Check that it is running locally and llama3.2:latest is installed.")
+            except LLMError:
+                st.error("The configured AI provider is unavailable. Check its connection and model settings.")
     if st.button("Next", key="subjective_next"):
         goto_next()

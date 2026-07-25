@@ -4,7 +4,7 @@ import re
 from enum import Enum
 from pathlib import Path
 
-from llm import OllamaListener
+from llm import LLMClient, OllamaListener
 
 class PageType(Enum):
     CATEGORY="category"
@@ -17,7 +17,7 @@ class LearningBackend:
     def __init__(self, course_path=None, llm_client=None):
         project_path = Path(__file__).resolve().parent
         self.course_path = project_path / "course" if course_path is None else Path(course_path)
-        self.llm = llm_client or OllamaListener()
+        self.llm: LLMClient = llm_client or OllamaListener()
         self.score=0
         self.events=[]
         self.answered_step_ids=set()
@@ -36,24 +36,42 @@ class LearningBackend:
 
     # Notes preparation -------------------------------------------------
     # A persisted FIFO queue makes the topic traversal breadth-first and resumable.
-    def _notes_progress_path(self):
-        return self.course_path / ".notes_progress.json"
+    def _notes_progress_path(self, subject):
+        return self.course_path / self._folder_name(subject) / ".notes_progress.json"
 
-    def _load_notes_progress(self):
-        progress_path = self._notes_progress_path()
+    def _read_progress_file(self, progress_path):
         if not progress_path.is_file():
-            return {}
+            return None
         try:
             data = json.loads(progress_path.read_text(encoding="utf-8"))
         except (OSError, json.JSONDecodeError):
-            return {}
-        return data if isinstance(data, dict) else {}
+            return None
+        return data if isinstance(data, dict) else None
 
-    def _save_notes_progress(self, progress):
-        self.course_path.mkdir(parents=True, exist_ok=True)
-        self._notes_progress_path().write_text(
-            json.dumps(progress, indent=2, sort_keys=True), encoding="utf-8"
+    def _load_notes_progress(self, subject):
+        """Load only one subject's queue, migrating the previous shared format if needed."""
+        progress = self._read_progress_file(self._notes_progress_path(subject))
+        if progress is not None:
+            return progress
+        legacy = self._read_progress_file(self.course_path / ".notes_progress.json")
+        session = legacy.get(subject) if isinstance(legacy, dict) else None
+        return session if isinstance(session, dict) else None
+
+    def _save_notes_progress(self, subject, session):
+        progress_path = self._notes_progress_path(subject)
+        progress_path.parent.mkdir(parents=True, exist_ok=True)
+        progress_path.write_text(
+            json.dumps(session, indent=2, sort_keys=True), encoding="utf-8"
         )
+        # Move this subject out of the old course-wide progress file when present.
+        legacy_path = self.course_path / ".notes_progress.json"
+        legacy = self._read_progress_file(legacy_path)
+        if isinstance(legacy, dict) and subject in legacy:
+            legacy.pop(subject)
+            if legacy:
+                legacy_path.write_text(json.dumps(legacy, indent=2, sort_keys=True), encoding="utf-8")
+            else:
+                legacy_path.unlink(missing_ok=True)
 
     @staticmethod
     def _folder_name(name):
@@ -76,14 +94,14 @@ class LearningBackend:
 
         self.course_path.mkdir(parents=True, exist_ok=True)
         (self.course_path / subject).mkdir(exist_ok=True)
-        progress = self._load_notes_progress()
-        if restart or subject not in progress:
-            progress[subject] = {"queue": [""], "completed": [], "max_depth": max_depth}
-        self._save_notes_progress(progress)
+        progress = self._load_notes_progress(subject)
+        if restart or progress is None:
+            progress = {"queue": [""], "completed": [], "max_depth": max_depth}
+        self._save_notes_progress(subject, progress)
         return self.get_notes_progress(subject)
 
     def get_notes_progress(self, subject):
-        session = self._load_notes_progress().get(subject)
+        session = self._load_notes_progress(subject)
         if not isinstance(session, dict):
             return None
         queue = session.get("queue")
@@ -203,8 +221,7 @@ class LearningBackend:
 
     def complete_notes_topic(self, subject, relative_topic, selected_subtopics):
         """Confirm children, enqueue them at the end, and move to the next BFS topic."""
-        progress = self._load_notes_progress()
-        session = progress.get(subject)
+        session = self._load_notes_progress(subject)
         if not isinstance(session, dict) or not session.get("queue") or session["queue"][0] != relative_topic:
             raise ValueError("This topic is no longer the current notes task.")
         max_depth = session.get("max_depth", 2)
@@ -230,8 +247,7 @@ class LearningBackend:
         finished = session["queue"].pop(0)
         if finished not in session["completed"]:
             session["completed"].append(finished)
-        progress[subject] = session
-        self._save_notes_progress(progress)
+        self._save_notes_progress(subject, session)
         return self.get_notes_progress(subject)
 
     def start_course(self, category):
@@ -416,7 +432,7 @@ class LearningBackend:
         return selected == answer
 
     def evaluate_subjective_answer(self, category, step, answer):
-        """Use Ollama to assess a free-text answer against the generated model answer."""
+        """Use the configured language model to assess a free-text answer."""
         if not isinstance(step, dict) or step.get("type") != PageType.SUBJECTIVE:
             raise ValueError("This is not a subjective question.")
         if not isinstance(answer, str) or not answer.strip():
