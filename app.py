@@ -85,7 +85,12 @@ def render_notes_preparation():
         horizontal=True,
         key=f"notes_navigation_{subject}",
     )
-    if navigation == "Choose a topic to edit":
+    picker_edit_key = f"notes_editing_selected_{subject}"
+    last_navigation_key = f"notes_last_navigation_{subject}"
+    if st.session_state.get(last_navigation_key) != navigation:
+        st.session_state[picker_edit_key] = False
+        st.session_state[last_navigation_key] = navigation
+    if navigation == "Choose a topic to edit" and not st.session_state.get(picker_edit_key, False):
         available_topics = backend.list_notes_topics(subject)
         chosen_topic = st.selectbox(
             "Available topic folders",
@@ -95,10 +100,16 @@ def render_notes_preparation():
         if st.button("Open selected topic", key="open_notes_topic"):
             try:
                 backend.select_notes_topic(subject, chosen_topic)
+                st.session_state[picker_edit_key] = True
                 st.rerun()
             except ValueError as error:
                 st.error(str(error))
         return
+    if navigation == "Choose a topic to edit":
+        st.caption("Editing the selected topic. Choose another topic if needed.")
+        if st.button("Choose a different topic", key="choose_different_topic"):
+            st.session_state[picker_edit_key] = False
+            st.rerun()
 
     topic = backend.get_current_notes_topic(subject)
     if topic is None:
@@ -262,11 +273,13 @@ if st.session_state.mode == "notes":
 
 if not st.session_state.started:
     st.title("Learning App")
-    st.write("Choose a category")
-
-    if st.button("Prepare notes", key="prepare_notes"):
+    st.subheader("Notes workspace")
+    if st.button("📝 Prepare notes", key="prepare_notes", type="primary", use_container_width=True):
         st.session_state.mode = "notes"
         st.rerun()
+
+    st.divider()
+    st.subheader("Learn a subject")
 
     categories = backend.get_categories()
     if not categories:
