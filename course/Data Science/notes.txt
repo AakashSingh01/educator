@@ -1,0 +1,39 @@
+# Data Science Overview
+Data science is an interdisciplinary field that uses scientific methods, processes, algorithms, and systems to extract knowledge and insights from structured and unstructured data.
+
+# Core Ideas
+## Definition of Data Science
+Data science involves extracting insights and patterns from data using various statistical and computational techniques.
+
+## Key Activities
+1. **Data Preparation**: Cleaning, transforming, and formatting data for analysis.
+2. **Data Analysis**: Applying statistical and machine learning models to extract insights.
+3. **Data Visualization**: Presenting findings in a clear and interpretable manner.
+4. **Deployment**: Implementing solutions and models into production environments.
+
+## Data Science Life Cycle
+1. **Problem Definition**: Identifying business problems or opportunities for data-driven insights.
+2. **Data Collection**: Gathering relevant data from various sources.
+3. **Data Preprocessing**: Cleaning, transforming, and formatting data for analysis.
+4. **Modeling**: Applying statistical and machine learning models to extract insights.
+5. **Evaluation**: Assessing the performance of models and solutions.
+6. **Deployment**: Implementing solutions and models into production environments.
+7. **Monitoring**: Continuously monitoring model performance and updating solutions as needed.
+
+# Data Science Terminology
+## Key Terms
+1. **Data Mining**: The process of automatically discovering patterns, relationships, and insights from large datasets.
+2. **Machine Learning**: A type of artificial intelligence that enables systems to learn from data without being explicitly programmed.
+3. **Artificial Intelligence (AI)**: The development of computer systems able to perform tasks requiring human-like intelligence.
+4. **Big Data**: Large datasets that are difficult to process and analyze using traditional methods.
+5. **Data Science Tools**: Software packages, frameworks, and libraries used for data analysis, modeling, and visualization.
+
+# Relationships Between Concepts
+## Data Science and AI
+Data science is a key application of artificial intelligence (AI), leveraging machine learning algorithms to extract insights from data.
+
+## Data Science and Machine Learning
+Machine learning is a fundamental component of data science, enabling systems to learn from data and make predictions or decisions.
+
+## Data Science and Big Data
+Big data is a key characteristic of many datasets used in data science, requiring specialized tools and techniques for analysis and processing.

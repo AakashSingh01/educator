@@ -31,7 +31,6 @@ class OllamaListener:
             ):
                 messages.append({"role": message["role"], "content": message["content"].strip()})
         messages.append({"role": "user", "content": prompt})
-        print(f"Ollama request: {messages}")  # Debugging line
         payload = json.dumps({
             "model": self.model,
             "messages": messages,
@@ -48,7 +47,6 @@ class OllamaListener:
         try:
             with urlopen(request, timeout=self.timeout) as response:
                 result = json.loads(response.read().decode("utf-8"))
-                print(f"Ollama response: {result}")  # Debugging line
         except (HTTPError, URLError, TimeoutError, json.JSONDecodeError) as error:
             raise OllamaError(f"Could not reach Ollama at {self.host}: {error}") from error
 

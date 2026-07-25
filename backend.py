@@ -34,6 +34,206 @@ class LearningBackend:
             if folder.is_dir() and not folder.name.startswith(".")
         )
 
+    # Notes preparation -------------------------------------------------
+    # A persisted FIFO queue makes the topic traversal breadth-first and resumable.
+    def _notes_progress_path(self):
+        return self.course_path / ".notes_progress.json"
+
+    def _load_notes_progress(self):
+        progress_path = self._notes_progress_path()
+        if not progress_path.is_file():
+            return {}
+        try:
+            data = json.loads(progress_path.read_text(encoding="utf-8"))
+        except (OSError, json.JSONDecodeError):
+            return {}
+        return data if isinstance(data, dict) else {}
+
+    def _save_notes_progress(self, progress):
+        self.course_path.mkdir(parents=True, exist_ok=True)
+        self._notes_progress_path().write_text(
+            json.dumps(progress, indent=2, sort_keys=True), encoding="utf-8"
+        )
+
+    @staticmethod
+    def _folder_name(name):
+        if not isinstance(name, str):
+            raise ValueError("A topic name is required.")
+        clean_name = name.strip()
+        if not clean_name or clean_name in {".", ".."} or "/" in clean_name or "\\" in clean_name:
+            raise ValueError("Topic names cannot be empty or contain path separators.")
+        if clean_name.startswith("."):
+            raise ValueError("Topic names cannot start with a dot.")
+        return clean_name
+
+    def begin_notes_session(self, subject, max_depth=2, restart=False):
+        """Create or resume a subject's persisted notes-preparation queue."""
+        subject = self._folder_name(subject)
+        try:
+            max_depth = max(0, int(max_depth))
+        except (TypeError, ValueError) as error:
+            raise ValueError("Maximum depth must be a whole number.") from error
+
+        self.course_path.mkdir(parents=True, exist_ok=True)
+        (self.course_path / subject).mkdir(exist_ok=True)
+        progress = self._load_notes_progress()
+        if restart or subject not in progress:
+            progress[subject] = {"queue": [""], "completed": [], "max_depth": max_depth}
+        self._save_notes_progress(progress)
+        return self.get_notes_progress(subject)
+
+    def get_notes_progress(self, subject):
+        session = self._load_notes_progress().get(subject)
+        if not isinstance(session, dict):
+            return None
+        queue = session.get("queue")
+        completed = session.get("completed")
+        if not isinstance(queue, list) or not isinstance(completed, list):
+            return None
+        return {
+            "queue": queue,
+            "completed": completed,
+            "max_depth": session.get("max_depth", 2),
+        }
+
+    def _topic_folder(self, subject, relative_topic):
+        subject = self._folder_name(subject)
+        if not isinstance(relative_topic, str):
+            raise ValueError("Invalid topic path.")
+        relative_path = Path(relative_topic)
+        if relative_path.is_absolute() or ".." in relative_path.parts:
+            raise ValueError("Invalid topic path.")
+        folder = (self.course_path / subject / relative_path).resolve()
+        root = (self.course_path / subject).resolve()
+        if folder != root and root not in folder.parents:
+            raise ValueError("Invalid topic path.")
+        return folder
+
+    def get_current_notes_topic(self, subject):
+        progress = self.get_notes_progress(subject)
+        if not progress or not progress["queue"]:
+            return None
+        relative_topic = progress["queue"][0]
+        folder = self._topic_folder(subject, relative_topic)
+        folder.mkdir(parents=True, exist_ok=True)
+        notes_path = folder / "notes.txt"
+        try:
+            notes = notes_path.read_text(encoding="utf-8") if notes_path.is_file() else ""
+        except OSError as error:
+            raise ValueError(f"Could not read notes for this topic: {error}") from error
+        children = sorted(
+            child.name for child in folder.iterdir()
+            if child.is_dir() and not child.name.startswith(".")
+        )
+        return {
+            "relative_path": relative_topic,
+            "label": subject if not relative_topic else f"{subject} / {relative_topic}",
+            "depth": len(Path(relative_topic).parts) if relative_topic else 0,
+            "notes": notes,
+            "existing_subtopics": children,
+            "max_depth": progress["max_depth"],
+        }
+
+    def generate_topic_notes(self, subject, relative_topic, instruction=""):
+        topic = self.get_current_notes_topic(subject)
+        if not topic or topic["relative_path"] != relative_topic:
+            raise ValueError("This topic is no longer the current notes task.")
+        user_instruction = instruction.strip() if isinstance(instruction, str) else ""
+        prompt = (
+            f"Subject: {subject}\nTopic path: {topic['label']}\n"
+            f"Additional learner instruction: {user_instruction or 'None'}\n\n"
+            "Write clear, self-contained study notes for this topic. Return exactly JSON as "
+            '{"notes":"..."}. Use concise Markdown-style headings and examples where useful. '
+            "Cover only this topic's overview, core ideas, terminology, and relationships. Do not explain "
+            "likely child subtopics in depth; they will have their own notes files."
+        )
+        response = self.llm.chat(
+            prompt,
+            system_prompt="You write accurate, concise educational notes. Return valid JSON only.",
+        )
+        try:
+            notes = json.loads(response).get("notes")
+        except (AttributeError, TypeError, json.JSONDecodeError) as error:
+            raise ValueError("The model did not return valid notes. Please try again.") from error
+        if not isinstance(notes, str) or not notes.strip():
+            raise ValueError("The model returned empty notes. Please try again.")
+        return notes.strip()
+
+    def save_topic_notes(self, subject, relative_topic, notes):
+        if not isinstance(notes, str) or not notes.strip():
+            raise ValueError("Notes cannot be empty.")
+        folder = self._topic_folder(subject, relative_topic)
+        folder.mkdir(parents=True, exist_ok=True)
+        try:
+            (folder / "notes.txt").write_text(notes.strip() + "\n", encoding="utf-8")
+        except OSError as error:
+            raise ValueError(f"Could not save notes: {error}") from error
+
+    def suggest_subtopics(self, subject, relative_topic):
+        topic = self.get_current_notes_topic(subject)
+        if not topic or topic["relative_path"] != relative_topic:
+            raise ValueError("This topic is no longer the current notes task.")
+        prompt = (
+            f"Subject: {subject}\nTopic: {topic['label']}\nNotes:\n{topic['notes']}\n\n"
+            "Suggest 3 to 8 direct subtopics for a study-notes folder structure. Return exactly JSON as "
+            '{"subtopics":["Topic one","Topic two"]}. Suggest only direct children, not grandchildren, '
+            "and avoid duplicates or topics already adequately covered in the parent notes."
+        )
+        response = self.llm.chat(
+            prompt,
+            system_prompt="You design concise, non-overlapping educational topic outlines. Return valid JSON only.",
+        )
+        try:
+            subtopics = json.loads(response).get("subtopics")
+        except (AttributeError, TypeError, json.JSONDecodeError) as error:
+            raise ValueError("The model did not return valid subtopics. Please try again.") from error
+        if not isinstance(subtopics, list):
+            raise ValueError("The model returned invalid subtopics. Please try again.")
+        cleaned = []
+        for subtopic in subtopics[:8]:
+            try:
+                name = self._folder_name(subtopic)
+            except ValueError:
+                continue
+            if name.casefold() not in {item.casefold() for item in cleaned}:
+                cleaned.append(name)
+        if not cleaned:
+            raise ValueError("The model did not suggest usable subtopics. Please try again.")
+        return cleaned
+
+    def complete_notes_topic(self, subject, relative_topic, selected_subtopics):
+        """Confirm children, enqueue them at the end, and move to the next BFS topic."""
+        progress = self._load_notes_progress()
+        session = progress.get(subject)
+        if not isinstance(session, dict) or not session.get("queue") or session["queue"][0] != relative_topic:
+            raise ValueError("This topic is no longer the current notes task.")
+        max_depth = session.get("max_depth", 2)
+        depth = len(Path(relative_topic).parts) if relative_topic else 0
+        selected_subtopics = selected_subtopics or []
+        if depth >= max_depth:
+            selected_subtopics = []
+
+        folder = self._topic_folder(subject, relative_topic)
+        seen_names = set()
+        known_path_cases = {path.casefold() for path in session["queue"] + session["completed"]}
+        for subtopic in selected_subtopics:
+            name = self._folder_name(subtopic)
+            if name.casefold() in seen_names:
+                continue
+            seen_names.add(name.casefold())
+            child_relative = str(Path(relative_topic) / name) if relative_topic else name
+            (folder / name).mkdir(parents=True, exist_ok=True)
+            if child_relative.casefold() not in known_path_cases:
+                session["queue"].append(child_relative)
+                known_path_cases.add(child_relative.casefold())
+
+        finished = session["queue"].pop(0)
+        if finished not in session["completed"]:
+            session["completed"].append(finished)
+        progress[subject] = session
+        self._save_notes_progress(progress)
+        return self.get_notes_progress(subject)
+
     def start_course(self, category):
         """Start a fresh, generated learning session for one subject."""
         self.steps.clear()
