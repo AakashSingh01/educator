@@ -1,6 +1,7 @@
 import json
 import random
 import re
+import shutil
 from enum import Enum
 from pathlib import Path
 
@@ -35,7 +36,7 @@ class LearningBackend:
         )
 
     # Notes preparation -------------------------------------------------
-    # A persisted FIFO queue makes the topic traversal breadth-first and resumable.
+    # A persisted stack makes the topic traversal depth-first and resumable.
     def _notes_progress_path(self, subject):
         return self.course_path / self._folder_name(subject) / ".notes_progress.json"
 
@@ -84,19 +85,15 @@ class LearningBackend:
             raise ValueError("Topic names cannot start with a dot.")
         return clean_name
 
-    def begin_notes_session(self, subject, max_depth=2, restart=False):
-        """Create or resume a subject's persisted notes-preparation queue."""
+    def begin_notes_session(self, subject, restart=False):
+        """Create or resume a subject's persisted depth-first notes plan."""
         subject = self._folder_name(subject)
-        try:
-            max_depth = max(0, int(max_depth))
-        except (TypeError, ValueError) as error:
-            raise ValueError("Maximum depth must be a whole number.") from error
 
         self.course_path.mkdir(parents=True, exist_ok=True)
         (self.course_path / subject).mkdir(exist_ok=True)
         progress = self._load_notes_progress(subject)
         if restart or progress is None:
-            progress = {"queue": [""], "completed": [], "max_depth": max_depth}
+            progress = {"queue": [""], "completed": []}
         self._save_notes_progress(subject, progress)
         return self.get_notes_progress(subject)
 
@@ -111,7 +108,6 @@ class LearningBackend:
         return {
             "queue": queue,
             "completed": completed,
-            "max_depth": session.get("max_depth", 2),
         }
 
     def _topic_folder(self, subject, relative_topic):
@@ -146,11 +142,73 @@ class LearningBackend:
         return {
             "relative_path": relative_topic,
             "label": subject if not relative_topic else f"{subject} / {relative_topic}",
-            "depth": len(Path(relative_topic).parts) if relative_topic else 0,
             "notes": notes,
             "existing_subtopics": children,
-            "max_depth": progress["max_depth"],
         }
+
+    def list_notes_topics(self, subject):
+        """Return all visible topic folders for manual selection and editing."""
+        root = self._topic_folder(subject, "")
+        root.mkdir(parents=True, exist_ok=True)
+        topics = [""]
+        for folder in root.rglob("*"):
+            if folder.is_dir():
+                relative = folder.relative_to(root)
+                if not any(part.startswith(".") for part in relative.parts):
+                    topics.append(str(relative))
+        return sorted(set(topics), key=lambda path: (len(Path(path).parts), path.casefold()))
+
+    def select_notes_topic(self, subject, relative_topic):
+        """Move a chosen existing topic to the top of the DFS stack."""
+        if relative_topic not in self.list_notes_topics(subject):
+            raise ValueError("Choose an existing topic folder.")
+        session = self._load_notes_progress(subject)
+        if session is None:
+            raise ValueError("Start a notes plan before selecting a topic.")
+        session["queue"] = [path for path in session["queue"] if path != relative_topic]
+        session["queue"].insert(0, relative_topic)
+        self._save_notes_progress(subject, session)
+
+    def rename_subtopic(self, subject, parent_relative, old_name, new_name):
+        """Rename one direct child folder and keep its saved progress paths valid."""
+        old_name = self._folder_name(old_name)
+        new_name = self._folder_name(new_name)
+        parent = self._topic_folder(subject, parent_relative)
+        source = parent / old_name
+        target = parent / new_name
+        if not source.is_dir():
+            raise ValueError("The selected subtopic folder does not exist.")
+        if target.exists():
+            raise ValueError("A subtopic with the new name already exists.")
+        source.rename(target)
+        old_relative = str(Path(parent_relative) / old_name) if parent_relative else old_name
+        new_relative = str(Path(parent_relative) / new_name) if parent_relative else new_name
+        session = self._load_notes_progress(subject)
+        if session:
+            for field in ("queue", "completed"):
+                session[field] = [
+                    new_relative + path[len(old_relative):]
+                    if path == old_relative or path.startswith(old_relative + "/") else path
+                    for path in session[field]
+                ]
+            self._save_notes_progress(subject, session)
+
+    def remove_subtopic(self, subject, parent_relative, subtopic_name):
+        """Remove a confirmed direct subtopic folder and all of its nested notes."""
+        name = self._folder_name(subtopic_name)
+        folder = self._topic_folder(subject, parent_relative) / name
+        if not folder.is_dir():
+            raise ValueError("The selected subtopic folder does not exist.")
+        relative = str(Path(parent_relative) / name) if parent_relative else name
+        shutil.rmtree(folder)
+        session = self._load_notes_progress(subject)
+        if session:
+            for field in ("queue", "completed"):
+                session[field] = [
+                    path for path in session[field]
+                    if path != relative and not path.startswith(relative + "/")
+                ]
+            self._save_notes_progress(subject, session)
 
     def generate_topic_notes(self, subject, relative_topic, instruction=""):
         topic = self.get_current_notes_topic(subject)
@@ -220,19 +278,16 @@ class LearningBackend:
         return cleaned
 
     def complete_notes_topic(self, subject, relative_topic, selected_subtopics):
-        """Confirm children, enqueue them at the end, and move to the next BFS topic."""
+        """Confirm children, push them onto the stack, and move to the next DFS topic."""
         session = self._load_notes_progress(subject)
         if not isinstance(session, dict) or not session.get("queue") or session["queue"][0] != relative_topic:
             raise ValueError("This topic is no longer the current notes task.")
-        max_depth = session.get("max_depth", 2)
-        depth = len(Path(relative_topic).parts) if relative_topic else 0
         selected_subtopics = selected_subtopics or []
-        if depth >= max_depth:
-            selected_subtopics = []
 
         folder = self._topic_folder(subject, relative_topic)
         seen_names = set()
         known_path_cases = {path.casefold() for path in session["queue"] + session["completed"]}
+        new_children = []
         for subtopic in selected_subtopics:
             name = self._folder_name(subtopic)
             if name.casefold() in seen_names:
@@ -241,12 +296,15 @@ class LearningBackend:
             child_relative = str(Path(relative_topic) / name) if relative_topic else name
             (folder / name).mkdir(parents=True, exist_ok=True)
             if child_relative.casefold() not in known_path_cases:
-                session["queue"].append(child_relative)
+                new_children.append(child_relative)
                 known_path_cases.add(child_relative.casefold())
 
         finished = session["queue"].pop(0)
         if finished not in session["completed"]:
             session["completed"].append(finished)
+        # Push in reverse so the first selected child is processed next (DFS).
+        for child_relative in reversed(new_children):
+            session["queue"].insert(0, child_relative)
         self._save_notes_progress(subject, session)
         return self.get_notes_progress(subject)
 

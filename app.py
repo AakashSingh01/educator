@@ -39,7 +39,7 @@ def reset_chapter(category):
 
 def render_notes_preparation():
     st.title("Prepare Notes")
-    st.caption("Review each topic, choose its direct subtopics, and build the notes structure breadth-first.")
+    st.caption("Review each topic, choose its direct subtopics, and build the notes structure depth-first.")
 
     if st.button("← Back to learning", key="notes_back"):
         st.session_state.mode = "learn"
@@ -55,11 +55,10 @@ def render_notes_preparation():
             format_func=lambda value: "Choose an existing subject" if not value else value,
         )
         new_subject = st.text_input("Or create a new subject folder")
-        max_depth = st.number_input("Maximum subtopic depth", min_value=0, max_value=10, value=2, step=1)
         if st.button("Start or resume notes", key="start_notes"):
             requested_subject = new_subject.strip() or selected_subject
             try:
-                backend.begin_notes_session(requested_subject, max_depth=max_depth)
+                backend.begin_notes_session(requested_subject)
                 st.session_state.notes_subject = requested_subject
                 st.rerun()
             except ValueError as error:
@@ -75,17 +74,38 @@ def render_notes_preparation():
         return
 
     completed_count = len(progress["completed"])
-    st.caption(f"Subject: {subject} · Completed: {completed_count} · Waiting in BFS queue: {len(progress['queue'])}")
+    st.caption(f"Subject: {subject} · Completed: {completed_count} · Waiting in DFS stack: {len(progress['queue'])}")
     if st.button("Stop and save progress", key="notes_stop"):
         st.session_state.notes_subject = None
         st.rerun()
+
+    navigation = st.radio(
+        "Notes workflow",
+        options=["Continue depth-first", "Choose a topic to edit"],
+        horizontal=True,
+        key=f"notes_navigation_{subject}",
+    )
+    if navigation == "Choose a topic to edit":
+        available_topics = backend.list_notes_topics(subject)
+        chosen_topic = st.selectbox(
+            "Available topic folders",
+            options=available_topics,
+            format_func=lambda path: subject if not path else f"{subject} / {path}",
+        )
+        if st.button("Open selected topic", key="open_notes_topic"):
+            try:
+                backend.select_notes_topic(subject, chosen_topic)
+                st.rerun()
+            except ValueError as error:
+                st.error(str(error))
+        return
 
     topic = backend.get_current_notes_topic(subject)
     if topic is None:
         st.success("All selected topics have been prepared. Your progress is saved.")
         col_restart, col_another = st.columns(2)
         if col_restart.button("Revisit this subject from the root", key="notes_restart"):
-            backend.begin_notes_session(subject, max_depth=progress["max_depth"], restart=True)
+            backend.begin_notes_session(subject, restart=True)
             st.rerun()
         if col_another.button("Prepare another subject", key="notes_another"):
             st.session_state.notes_subject = None
@@ -93,7 +113,6 @@ def render_notes_preparation():
         return
 
     st.subheader(topic["label"])
-    st.caption(f"Depth {topic['depth']} of {topic['max_depth']}")
     if topic["existing_subtopics"]:
         st.info("Existing subtopic folders: " + ", ".join(topic["existing_subtopics"]))
 
@@ -137,12 +156,38 @@ def render_notes_preparation():
         st.info("Generate or write the notes, then save them before choosing subtopics.")
         return
 
-    if topic["depth"] >= topic["max_depth"]:
-        st.info("Maximum depth reached. This topic will not create child folders.")
-        if st.button("Finish this topic", key=f"finish_{safe_topic_key}"):
-            backend.complete_notes_topic(subject, topic["relative_path"], [])
-            st.rerun()
-        return
+    if topic["existing_subtopics"]:
+        with st.expander("Manage existing direct subtopics"):
+            selected_existing = st.selectbox(
+                "Subtopic to rename or remove",
+                options=topic["existing_subtopics"],
+                key=f"manage_{safe_topic_key}",
+            )
+            renamed_subtopic = st.text_input(
+                "Rename selected subtopic to",
+                key=f"rename_{safe_topic_key}",
+            )
+            if st.button("Rename subtopic", key=f"rename_button_{safe_topic_key}"):
+                try:
+                    backend.rename_subtopic(
+                        subject, topic["relative_path"], selected_existing, renamed_subtopic
+                    )
+                    st.rerun()
+                except ValueError as error:
+                    st.error(str(error))
+            remove_confirmed = st.checkbox(
+                "I understand removal deletes this subtopic and all nested notes.",
+                key=f"remove_confirm_{safe_topic_key}",
+            )
+            if st.button("Remove selected subtopic", key=f"remove_button_{safe_topic_key}"):
+                if not remove_confirmed:
+                    st.error("Confirm removal before deleting a subtopic.")
+                else:
+                    try:
+                        backend.remove_subtopic(subject, topic["relative_path"], selected_existing)
+                        st.rerun()
+                    except ValueError as error:
+                        st.error(str(error))
 
     if st.button("Suggest subtopics", key=f"suggest_{safe_topic_key}"):
         try:
@@ -157,14 +202,14 @@ def render_notes_preparation():
     selected_subtopics = st.multiselect(
         "Choose subtopics to create or prepare",
         options=subtopic_options,
-        help="Only selected subtopics are added to the saved BFS queue.",
+        help="Only selected subtopics are added to the saved DFS stack.",
         key=f"selected_{safe_topic_key}",
     )
     manual_subtopics = st.text_input(
         "Add other direct subtopics (comma-separated)",
         key=f"manual_{safe_topic_key}",
     )
-    if st.button("Confirm subtopics and continue", key=f"continue_{safe_topic_key}"):
+    if st.button("Confirm subtopics and continue depth-first", key=f"continue_{safe_topic_key}"):
         manual_names = [name.strip() for name in manual_subtopics.split(",") if name.strip()]
         try:
             backend.complete_notes_topic(
