@@ -26,6 +26,7 @@ class LearningBackend:
         self.conversation_history=[]
         self.steps=[]
         self.learning_context=None
+        self.learning_scope=""
         self.learning_types=("mcq", "subjective", "theory")
         self.timer_preset="Infinite"
 
@@ -325,6 +326,7 @@ class LearningBackend:
         self.steps.clear()
         self.conversation_history.clear()
         self.learning_context = self.select_learning_context(category, scope)
+        self.learning_scope = scope
         self.learning_types = allowed_types
         self.timer_preset = timer_preset
         self.on_event("chapter_started", category=category)
@@ -342,14 +344,16 @@ class LearningBackend:
                     scopes.append(str(relative))
         return sorted(set(scopes), key=lambda path: (len(Path(path).parts), path.casefold()))
 
-    def select_learning_context(self, subject, scope=""):
+    def select_learning_context(self, subject, scope="", exclude_label=None):
         """Randomly choose one notes file from the chosen subject or subtopic scope."""
         root = self.course_path / self._folder_name(subject)
         if scope not in self.get_learning_scopes(subject):
             raise ValueError("Choose a valid subject or subtopic scope.")
         scope_folder = root / Path(scope)
         selected_notes_path = None
+        fallback_notes_path = None
         notes_count = 0
+        fallback_count = 0
         if scope_folder.is_dir():
             for notes_path in scope_folder.rglob("notes.txt"):
                 relative = notes_path.relative_to(root)
@@ -360,10 +364,18 @@ class LearningBackend:
                         continue
                 except OSError:
                     continue
+                relative_topic = notes_path.parent.relative_to(root)
+                label = subject if not relative_topic.parts else f"{subject} / {relative_topic}"
+                fallback_count += 1
+                if random.randrange(fallback_count) == 0:
+                    fallback_notes_path = notes_path
+                if label == exclude_label:
+                    continue
                 notes_count += 1
                 # Reservoir sampling keeps memory constant for large subject trees.
                 if random.randrange(notes_count) == 0:
                     selected_notes_path = notes_path
+        selected_notes_path = selected_notes_path or fallback_notes_path
         if selected_notes_path is None:
             label = subject if not scope else f"{subject} / {scope}"
             return {"label": label, "notes": ""}
@@ -449,6 +461,12 @@ class LearningBackend:
         """Use an optional learner comment, or create a random related next item."""
         if isinstance(comment, str) and comment.strip():
             return self._generate_random_step(category, comment, follow_up=True)
+        # A blank Next means the learner wants a fresh item, so sample another note in the selected scope.
+        self.learning_context = self.select_learning_context(
+            category,
+            self.learning_scope,
+            exclude_label=self.get_learning_context_label(),
+        )
         return self._generate_random_step(
             category,
             "Continue with a different, relevant learning item for this subject.",
@@ -473,23 +491,35 @@ class LearningBackend:
     @staticmethod
     def _parse_generated_step(response, expected_type=None):
         try:
-            data = json.loads(response)
+            response_text = response.strip() if isinstance(response, str) else response
+            if isinstance(response_text, str) and response_text.startswith("```"):
+                response_text = response_text.split("\n", 1)[-1].rsplit("```", 1)[0].strip()
+            data = json.loads(response_text)
         except (TypeError, json.JSONDecodeError) as error:
             raise ValueError("The model did not return a valid lesson. Please try again.") from error
         if not isinstance(data, dict):
             raise ValueError("The model returned an invalid lesson format. Please try again.")
 
-        step_type = data.get("type")
+        step_type = {"objective": "mcq", "multiple_choice": "mcq", "short_answer": "subjective"}.get(
+            data.get("type"), data.get("type")
+        )
         if step_type == "theory" and expected_type in (None, "theory"):
             title = data.get("title")
-            content = data.get("content")
+            content = data.get("content") or data.get("notes") or data.get("explanation")
             if isinstance(title, str) and title.strip() and isinstance(content, str) and content.strip():
                 return {"type": PageType.THEORY, "title": title.strip(), "content": content.strip()}
 
         if step_type == "mcq" and expected_type in (None, "mcq"):
             question = data.get("question")
             options = data.get("options")
-            correct_option = data.get("correct_option")
+            correct_option = (
+                data.get("correct_option")
+                or data.get("correct_answer")
+                or data.get("correctAnswer")
+                or data.get("answer_key")
+                or data.get("correct")
+                or data.get("answer")
+            )
             explanation = data.get("explanation")
             valid_options = (
                 isinstance(options, list)
@@ -497,26 +527,35 @@ class LearningBackend:
                 and all(isinstance(option, str) and option.strip() for option in options)
                 and len({option.strip().casefold() for option in options}) == 4
             )
+            cleaned_options = [option.strip() for option in options] if valid_options else []
+            option_by_folded_text = {option.casefold(): option for option in cleaned_options}
+            legacy_index = data.get("answer_index", data.get("answerIndex"))
+            if correct_option is None and isinstance(legacy_index, int) and not isinstance(legacy_index, bool):
+                if 0 <= legacy_index < len(cleaned_options):
+                    correct_option = cleaned_options[legacy_index]
+            if isinstance(correct_option, str):
+                correct_option = option_by_folded_text.get(correct_option.strip().casefold(), correct_option.strip())
+                if correct_option.upper() in {"A", "B", "C", "D"}:
+                    correct_option = cleaned_options[ord(correct_option.upper()) - ord("A")]
             if (
                 isinstance(question, str) and question.strip()
                 and valid_options
                 and isinstance(correct_option, str)
-                and correct_option.strip() in [option.strip() for option in options]
+                and correct_option in cleaned_options
                 and isinstance(explanation, str) and explanation.strip()
             ):
-                cleaned_options = [option.strip() for option in options]
                 return {
                     "type": PageType.MCQ,
                     "question": question.strip(),
                     "options": cleaned_options,
-                    "answer": cleaned_options.index(correct_option.strip()),
-                    "correct_option": correct_option.strip(),
+                    "answer": cleaned_options.index(correct_option),
+                    "correct_option": correct_option,
                     "explanation": explanation.strip(),
                 }
 
         if step_type == "subjective" and expected_type in (None, "subjective"):
             question = data.get("question")
-            sample_answer = data.get("sample_answer")
+            sample_answer = data.get("sample_answer") or data.get("model_answer") or data.get("answer")
             if (
                 isinstance(question, str) and question.strip()
                 and isinstance(sample_answer, str) and sample_answer.strip()
