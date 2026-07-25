@@ -138,6 +138,7 @@ def render_notes_preparation():
     safe_topic_key = topic["relative_path"].replace("/", "_") or "root"
     draft_key = f"notes_draft_{subject}_{safe_topic_key}"
     instruction_key = f"notes_instruction_{subject}_{safe_topic_key}"
+    subtopic_instruction_key = f"subtopic_instruction_{subject}_{safe_topic_key}"
     suggestions_key = f"notes_suggestions_{subject}_{safe_topic_key}"
     if draft_key not in st.session_state:
         st.session_state[draft_key] = topic["notes"]
@@ -208,10 +209,19 @@ def render_notes_preparation():
                     except ValueError as error:
                         st.error(str(error))
 
-    if st.button("Suggest subtopics", key=f"suggest_{safe_topic_key}"):
+    subtopic_instruction = st.text_input(
+        "Instruction for subtopics (optional)",
+        placeholder="For example: focus on practical concepts, exclude advanced topics, or suggest only five.",
+        key=subtopic_instruction_key,
+    )
+    if st.button("Suggest or regenerate subtopics", key=f"suggest_{safe_topic_key}"):
         try:
             with st.spinner("Finding focused direct subtopics..."):
-                st.session_state[suggestions_key] = backend.suggest_subtopics(subject, topic["relative_path"])
+                st.session_state[suggestions_key] = backend.suggest_subtopics(
+                    subject,
+                    topic["relative_path"],
+                    subtopic_instruction,
+                )
             st.rerun()
         except (ValueError, LLMError) as error:
             st.error(str(error))

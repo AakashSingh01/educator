@@ -246,12 +246,14 @@ class LearningBackend:
         except OSError as error:
             raise ValueError(f"Could not save notes: {error}") from error
 
-    def suggest_subtopics(self, subject, relative_topic):
+    def suggest_subtopics(self, subject, relative_topic, instruction=""):
         topic = self.get_current_notes_topic(subject)
         if not topic or topic["relative_path"] != relative_topic:
             raise ValueError("This topic is no longer the current notes task.")
+        user_instruction = instruction.strip() if isinstance(instruction, str) else ""
         prompt = (
             f"Subject: {subject}\nTopic: {topic['label']}\nNotes:\n{topic['notes']}\n\n"
+            f"Additional instruction: {user_instruction or 'None'}\n\n"
             "Suggest 3 to 8 direct subtopics for a study-notes folder structure. Return exactly JSON as "
             '{"subtopics":["Topic one","Topic two"]}. Suggest only direct children, not grandchildren, '
             "and avoid duplicates or topics already adequately covered in the parent notes."
