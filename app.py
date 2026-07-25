@@ -407,6 +407,10 @@ def inject_custom_styles():
             border: 1px solid {UI_COLORS["border"]};
             border-radius: 0.75rem;
         }}
+        [data-testid="stForm"] {{
+            border: 0;
+            padding: 0.2rem 0 0;
+        }}
         hr {{ border-color: {UI_COLORS["border"]}; }}
         div[role="radiogroup"] label,
         div[role="radio"] {{
@@ -456,7 +460,6 @@ if not st.session_state.started:
         st.session_state.mode = "notes"
         st.rerun()
 
-    st.divider()
     st.subheader("Learn a subject")
 
     categories = backend.get_categories()
@@ -570,14 +573,13 @@ def render_ask_box(step):
     if not already_submitted():
         return
 
-    st.divider()
     for message in st.session_state.ask_messages:
         if message.get("step") == st.session_state.step:
             with st.chat_message(message["role"]):
                 st.write(message["content"])
 
     with st.form(f"ask_form_{st.session_state.step}", clear_on_submit=True):
-        question = st.text_input("chat and counter question here:", placeholder="Why is this answer correct?")
+        question = st.text_input("Ask a follow-up about this result", placeholder="Why is this answer correct?")
         submitted = st.form_submit_button("Ask", on_click=mark_generating)
     if submitted:
         try:
