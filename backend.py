@@ -27,6 +27,7 @@ class LearningBackend:
         self.steps=[]
         self.learning_context=None
         self.learning_scope=""
+        self.learning_boundary_label=None
         self.learning_types=("mcq", "subjective", "theory")
         self.learning_type_cycle=[]
         self.timer_preset="Infinite"
@@ -328,6 +329,7 @@ class LearningBackend:
         self.ask_history.clear()
         self.learning_context = self.select_learning_context(category, scope)
         self.learning_scope = scope
+        self.learning_boundary_label = category if not scope else f"{category} / {scope}"
         self.learning_types = allowed_types
         self.learning_type_cycle = []
         self.timer_preset = timer_preset
@@ -345,6 +347,17 @@ class LearningBackend:
                 if not any(part.startswith(".") for part in relative.parts):
                     scopes.append(str(relative))
         return sorted(set(scopes), key=lambda path: (len(Path(path).parts), path.casefold()))
+
+    def get_direct_learning_subtopics(self, subject, scope=""):
+        """Return only one folder level for the setup screen's drill-down picker."""
+        root = self.course_path / self._folder_name(subject)
+        folder = root / Path(scope)
+        if not folder.is_dir():
+            return []
+        return sorted(
+            child.name for child in folder.iterdir()
+            if child.is_dir() and not child.name.startswith(".")
+        )
 
     def select_learning_context(self, subject, scope="", exclude_label=None):
         """Randomly choose one notes file from the chosen subject or subtopic scope."""
@@ -392,6 +405,9 @@ class LearningBackend:
     def get_learning_context_label(self):
         return self.learning_context["label"] if self.learning_context else None
 
+    def get_learning_boundary_label(self):
+        return self.learning_boundary_label
+
     def generate_step(self, category, thought, follow_up=False, expected_type=None):
         """Create and store one theory explanation or practice question from a learner prompt."""
         if not isinstance(thought, str) or not thought.strip():
@@ -419,13 +435,16 @@ class LearningBackend:
             if follow_up else ""
         )
         prompt = (
-            f"Subject: {category}\n"
-            f"Selected study scope: {self.get_learning_context_label() or category}\n"
+            f"Parent subject: {category}\n"
+            f"Requested learning boundary: {self.get_learning_boundary_label() or category}\n"
+            f"Sampled notes path: {self.get_learning_context_label() or category}\n"
             f"Prepared notes for this scope:\n{self._learning_context_notes()}\n\n"
             f"Learner request: {thought.strip()}\n\n"
             f"Create exactly one {expected_type} learning item. {format_instructions[expected_type]} "
             f"{follow_up_instruction}"
-            "Base the item on the prepared notes when they are available, and keep it within the selected study scope. "
+            "Hard rule: create content only from the requested learning boundary and its descendant notes. "
+            "Do not use parent-subject material or sibling topics outside that boundary, even if you know them. "
+            "Base the item on the prepared notes when they are available. "
             "Do not return theory, an explanation, or any other type when a question type is requested. "
             "Keep all content accurate, age-appropriate, and relevant."
         )

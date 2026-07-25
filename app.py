@@ -61,13 +61,46 @@ def render_learning_setup():
         st.session_state.setup_subject = None
         st.rerun()
 
-    learning_scopes = backend.get_learning_scopes(subject)
-    selected_scope = st.selectbox(
-        "Learning area",
-        options=learning_scopes,
-        format_func=lambda scope: "Full subject (random prepared note)" if not scope else scope,
-        key=f"setup_scope_{subject}",
-    )
+    scope_key = f"setup_scope_{subject}"
+    st.session_state.setdefault(scope_key, "")
+    selected_scope = st.session_state[scope_key]
+    st.subheader("Learning area")
+    st.caption(f"Selected: {subject if not selected_scope else f'{subject} / {selected_scope}'}")
+    scope_controls = st.columns(2)
+    if scope_controls[0].button("Use full subject", key=f"scope_root_{subject}"):
+        st.session_state[scope_key] = ""
+        st.rerun()
+    if scope_controls[1].button("Go up one level", key=f"scope_up_{subject}", disabled=not selected_scope):
+        st.session_state[scope_key] = selected_scope.rsplit("/", 1)[0] if "/" in selected_scope else ""
+        st.rerun()
+
+    direct_subtopics = backend.get_direct_learning_subtopics(subject, selected_scope)
+    if direct_subtopics:
+        topic_filter = st.text_input(
+            "Filter direct subtopics",
+            placeholder="Type to narrow the list",
+            key=f"scope_filter_{subject}_{selected_scope}",
+        ).casefold()
+        filtered_subtopics = [
+            topic for topic in direct_subtopics if topic_filter in topic.casefold()
+        ]
+        max_visible_topics = 20
+        visible_subtopics = filtered_subtopics[:max_visible_topics]
+        if len(filtered_subtopics) > max_visible_topics:
+            st.caption(f"Showing the first {max_visible_topics} matches. Refine the filter to narrow further.")
+        if visible_subtopics:
+            next_topic = st.selectbox(
+                "Direct subtopic",
+                options=visible_subtopics,
+                key=f"scope_child_{subject}_{selected_scope}",
+            )
+            if st.button("Open subtopic", key=f"scope_open_{subject}_{selected_scope}"):
+                st.session_state[scope_key] = (
+                    f"{selected_scope}/{next_topic}" if selected_scope else next_topic
+                )
+                st.rerun()
+        else:
+            st.info("No direct subtopics match that filter.")
     st.subheader("Include item types")
     type_columns = st.columns(3)
     include_objective = type_columns[0].checkbox("Objective", value=True, key=f"setup_objective_{subject}")
@@ -511,9 +544,12 @@ col1, col2, col3 = st.columns([6, 2, 1])
 
 with col1:
     st.subheader(f"📚 {st.session_state.category}")
+    learning_boundary = backend.get_learning_boundary_label()
     learning_scope = backend.get_learning_context_label()
-    if learning_scope:
-        st.caption(f"Learning focus: {learning_scope}")
+    if learning_boundary:
+        st.caption(f"Learning area: {learning_boundary}")
+    if learning_scope and learning_scope != learning_boundary:
+        st.caption(f"Sampled notes: {learning_scope}")
 
 with col2:
     if remaining is None:
