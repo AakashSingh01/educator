@@ -534,7 +534,10 @@ elif step["type"]==PageType.MCQ:
                     "step": st.session_state.step,
                     "status": "success" if ok else "error",
                     "message": "Correct" if ok else "Incorrect",
-                    "info": step.get("explanation"),
+                    "info": (
+                        f"Correct answer: {step.get('correct_option', step['options'][step['answer']])}\n\n"
+                        f"{step.get('explanation', '')}"
+                    ),
                     "submitted": True,
                 }
             except (KeyError, TypeError, ValueError):

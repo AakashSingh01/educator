@@ -381,7 +381,8 @@ class LearningBackend:
             "mcq": (
                 'Return exactly {"type":"mcq","question":"question",'
                 '"options":["option 1","option 2","option 3","option 4"],'
-                '"answer_index":0,"explanation":"why the answer is correct"}.'
+                '"correct_option":"option 2","explanation":"why the answer is correct"}. '
+                "The correct_option must exactly copy one item from options; never use a number or an index."
             ),
             "subjective": (
                 'Return exactly {"type":"subjective","question":"question",'
@@ -476,7 +477,7 @@ class LearningBackend:
         if step_type == "mcq" and expected_type in (None, "mcq"):
             question = data.get("question")
             options = data.get("options")
-            answer_index = data.get("answer_index")
+            correct_option = data.get("correct_option")
             explanation = data.get("explanation")
             valid_options = (
                 isinstance(options, list)
@@ -487,15 +488,17 @@ class LearningBackend:
             if (
                 isinstance(question, str) and question.strip()
                 and valid_options
-                and isinstance(answer_index, int) and not isinstance(answer_index, bool)
-                and 0 <= answer_index < len(options)
+                and isinstance(correct_option, str)
+                and correct_option.strip() in [option.strip() for option in options]
                 and isinstance(explanation, str) and explanation.strip()
             ):
+                cleaned_options = [option.strip() for option in options]
                 return {
                     "type": PageType.MCQ,
                     "question": question.strip(),
-                    "options": [option.strip() for option in options],
-                    "answer": answer_index,
+                    "options": cleaned_options,
+                    "answer": cleaned_options.index(correct_option.strip()),
+                    "correct_option": correct_option.strip(),
                     "explanation": explanation.strip(),
                 }
 
