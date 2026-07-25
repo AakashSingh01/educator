@@ -335,24 +335,32 @@ class LearningBackend:
         if scope not in self.get_learning_scopes(subject):
             raise ValueError("Choose a valid subject or subtopic scope.")
         scope_folder = root / Path(scope)
-        candidates = []
+        selected_notes_path = None
+        notes_count = 0
         if scope_folder.is_dir():
             for notes_path in scope_folder.rglob("notes.txt"):
                 relative = notes_path.relative_to(root)
                 if any(part.startswith(".") for part in relative.parts):
                     continue
                 try:
-                    notes = notes_path.read_text(encoding="utf-8").strip()
+                    if notes_path.stat().st_size == 0:
+                        continue
                 except OSError:
                     continue
-                if notes:
-                    relative_topic = notes_path.parent.relative_to(root)
-                    label = subject if not relative_topic.parts else f"{subject} / {relative_topic}"
-                    candidates.append({"label": label, "notes": notes})
-        if not candidates:
+                notes_count += 1
+                # Reservoir sampling keeps memory constant for large subject trees.
+                if random.randrange(notes_count) == 0:
+                    selected_notes_path = notes_path
+        if selected_notes_path is None:
             label = subject if not scope else f"{subject} / {scope}"
             return {"label": label, "notes": ""}
-        return random.choice(candidates)
+        try:
+            notes = selected_notes_path.read_text(encoding="utf-8").strip()
+        except OSError:
+            notes = ""
+        relative_topic = selected_notes_path.parent.relative_to(root)
+        label = subject if not relative_topic.parts else f"{subject} / {relative_topic}"
+        return {"label": label, "notes": notes}
 
     def get_learning_context_label(self):
         return self.learning_context["label"] if self.learning_context else None
