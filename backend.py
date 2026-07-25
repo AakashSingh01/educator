@@ -28,6 +28,7 @@ class LearningBackend:
         self.learning_context=None
         self.learning_scope=""
         self.learning_types=("mcq", "subjective", "theory")
+        self.learning_type_cycle=[]
         self.timer_preset="Infinite"
 
     def get_categories(self):
@@ -328,6 +329,7 @@ class LearningBackend:
         self.learning_context = self.select_learning_context(category, scope)
         self.learning_scope = scope
         self.learning_types = allowed_types
+        self.learning_type_cycle = []
         self.timer_preset = timer_preset
         self.on_event("chapter_started", category=category)
 
@@ -512,12 +514,25 @@ class LearningBackend:
         return answer.strip()
 
     def _generate_random_step(self, category, instruction, follow_up=False):
-        return self.generate_step(
-            category,
-            instruction,
-            follow_up=follow_up,
-            expected_type=random.choice(self.learning_types),
-        )
+        expected_type = self._next_learning_type()
+        try:
+            return self.generate_step(
+                category,
+                instruction,
+                follow_up=follow_up,
+                expected_type=expected_type,
+            )
+        except Exception:
+            # Keep failed generations from consuming their turn in the balanced cycle.
+            self.learning_type_cycle.insert(0, expected_type)
+            raise
+
+    def _next_learning_type(self):
+        """Return item types in shuffled, equal-frequency cycles."""
+        if not self.learning_type_cycle:
+            self.learning_type_cycle = list(self.learning_types)
+            random.shuffle(self.learning_type_cycle)
+        return self.learning_type_cycle.pop()
 
     @staticmethod
     def _expected_step_type(thought):
