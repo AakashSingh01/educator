@@ -5,6 +5,7 @@ from html import escape
 import streamlit as st
 from streamlit_autorefresh import st_autorefresh
 from backend import LearningBackend, PageType
+from learning_config import QUESTION_MODE_TYPES, TIMER_PRESETS
 from llm import LLMError
 from ui_config import FONT_SIZES, UI_COLORS
 
@@ -20,6 +21,9 @@ defaults = {
     "last_submit": None,
     "mode": "learn",
     "notes_subject": None,
+    "setup_subject": None,
+    "learning_timer": "Normal",
+    "learning_types": list(QUESTION_MODE_TYPES["Both"]),
 }
 for k,v in defaults.items():
     st.session_state.setdefault(k,v)
@@ -28,8 +32,9 @@ if "backend" not in st.session_state:
     st.session_state.backend = LearningBackend()
 backend = st.session_state.backend
 
-def reset_chapter(category):
-    backend.start_course(category)
+def reset_chapter(category, scope="", allowed_types=None, timer_preset="Normal"):
+    allowed_types = tuple(allowed_types or QUESTION_MODE_TYPES["Both"])
+    backend.start_course(category, scope, allowed_types, timer_preset)
     st.session_state.category = category
     st.session_state.started = True
     st.session_state.step = backend.first_step()
@@ -37,13 +42,80 @@ def reset_chapter(category):
     st.session_state.timeout_sent = False
     st.session_state.last_submit = None
     st.session_state.learner_thought = ""
+    st.session_state.learning_timer = timer_preset
+    st.session_state.learning_types = list(allowed_types)
 
 def start_learning_scope(scope):
-    backend.start_course(st.session_state.category, scope)
+    backend.start_course(
+        st.session_state.category,
+        scope,
+        st.session_state.learning_types,
+        st.session_state.learning_timer,
+    )
     st.session_state.step = backend.generate_initial_step(st.session_state.category)
     st.session_state.end_time = None
     st.session_state.timeout_sent = False
     st.session_state.last_submit = None
+
+def render_learning_setup():
+    subject = st.session_state.setup_subject
+    st.title(f"Start {subject}")
+    st.caption("Choose a learning area, time pace, and the kinds of items you want to study.")
+
+    if st.button("← Back to subjects", key="setup_back"):
+        st.session_state.setup_subject = None
+        st.rerun()
+
+    learning_scopes = backend.get_learning_scopes(subject)
+    selected_scope = st.selectbox(
+        "Learning area",
+        options=learning_scopes,
+        format_func=lambda scope: "Full subject (random prepared note)" if not scope else scope,
+        key=f"setup_scope_{subject}",
+    )
+    session_mode = st.radio(
+        "Study mode",
+        options=["Question mode", "Learning mode"],
+        horizontal=True,
+        key=f"setup_mode_{subject}",
+    )
+
+    if session_mode == "Question mode":
+        question_mode = st.radio(
+            "Questions",
+            options=list(QUESTION_MODE_TYPES),
+            horizontal=True,
+            key=f"question_mode_{subject}",
+        )
+        allowed_types = QUESTION_MODE_TYPES[question_mode]
+        timer_preset = st.selectbox(
+            "Timer",
+            options=list(TIMER_PRESETS),
+            index=list(TIMER_PRESETS).index("Normal"),
+            key=f"timer_preset_{subject}",
+        )
+        st.caption("Slow: 2 min objective / 4 min subjective · Normal: 1 min / 2 min · Fast: 30 sec / 1 min")
+    else:
+        selected_items = st.multiselect(
+            "Include",
+            options=["Objective", "Subjective", "Theory"],
+            default=["Objective", "Subjective", "Theory"],
+            key=f"learning_items_{subject}",
+        )
+        type_map = {"Objective": "mcq", "Subjective": "subjective", "Theory": "theory"}
+        allowed_types = tuple(type_map[item] for item in selected_items)
+        timer_preset = "Infinite"
+        st.info("Learning mode uses infinite time for all selected item types.")
+
+    if st.button("Start learning", type="primary", use_container_width=True, key="start_configured_learning"):
+        try:
+            with st.spinner("Creating your first learning item..."):
+                reset_chapter(subject, selected_scope, allowed_types, timer_preset)
+                st.session_state.step = backend.generate_initial_step(subject)
+            st.session_state.setup_subject = None
+            st.rerun()
+        except (ValueError, LLMError) as error:
+            st.error(str(error))
 
 def render_notes_preparation():
     st.title("Prepare Notes")
@@ -370,6 +442,10 @@ if st.session_state.mode == "notes":
     render_notes_preparation()
     st.stop()
 
+if st.session_state.setup_subject:
+    render_learning_setup()
+    st.stop()
+
 if not st.session_state.started:
     st.title("Learning App")
     st.subheader("Notes workspace")
@@ -387,14 +463,8 @@ if not st.session_state.started:
         cols = st.columns(len(categories))
         for col, category in zip(cols, categories):
             if col.button(category, key=f"category_{category}"):
-                try:
-                    reset_chapter(category)
-                    with st.spinner("Creating your first learning item..."):
-                        st.session_state.step = backend.generate_initial_step(category)
-                    st.rerun()
-                except (ValueError, LLMError) as error:
-                    st.session_state.started = False
-                    st.error(str(error))
+                st.session_state.setup_subject = category
+                st.rerun()
     st.stop()
 
 
@@ -406,6 +476,7 @@ if st.session_state.show_home_dialog:
         if st.button("Yes"):
             backend.on_event("chapter_closed",step_id=st.session_state.step)
             st.session_state.started=False
+            st.session_state.setup_subject=None
             st.session_state.step=backend.first_step()
             st.session_state.end_time=None
             st.session_state.timeout_sent=False

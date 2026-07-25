@@ -5,6 +5,7 @@ import shutil
 from enum import Enum
 from pathlib import Path
 
+from learning_config import LEARNING_MODE_TYPES, TIMER_PRESETS, get_time_limit
 from llm import LLMClient, OllamaListener
 
 class PageType(Enum):
@@ -25,6 +26,8 @@ class LearningBackend:
         self.conversation_history=[]
         self.steps=[]
         self.learning_context=None
+        self.learning_types=("mcq", "subjective", "theory")
+        self.timer_preset="Infinite"
 
     def get_categories(self):
         """Return visible subject folders from the configured course directory."""
@@ -311,11 +314,19 @@ class LearningBackend:
         self._save_notes_progress(subject, session)
         return self.get_notes_progress(subject)
 
-    def start_course(self, category, scope=""):
+    def start_course(self, category, scope="", allowed_types=None, timer_preset="Normal"):
         """Start a fresh, generated learning session for one subject."""
+        allowed_types = tuple(allowed_types or LEARNING_MODE_TYPES)
+        valid_types = {"mcq", "subjective", "theory"}
+        if not allowed_types or not set(allowed_types).issubset(valid_types):
+            raise ValueError("Choose at least one valid learning item type.")
+        if timer_preset not in TIMER_PRESETS:
+            raise ValueError("Choose a valid timer preset.")
         self.steps.clear()
         self.conversation_history.clear()
         self.learning_context = self.select_learning_context(category, scope)
+        self.learning_types = allowed_types
+        self.timer_preset = timer_preset
         self.on_event("chapter_started", category=category)
 
     def get_learning_scopes(self, subject):
@@ -412,6 +423,7 @@ class LearningBackend:
             history=self.conversation_history[-4:],
         )
         step = self._parse_generated_step(response, expected_type)
+        step["time_limit"] = get_time_limit(self.timer_preset, expected_type)
         self.steps.append(step)
         self.conversation_history.extend((
             {"role": "user", "content": thought.strip()},
@@ -436,7 +448,7 @@ class LearningBackend:
     def generate_follow_up_step(self, category, comment):
         """Use an optional learner comment, or create a random related next item."""
         if isinstance(comment, str) and comment.strip():
-            return self.generate_step(category, comment, follow_up=True)
+            return self._generate_random_step(category, comment, follow_up=True)
         return self._generate_random_step(
             category,
             "Continue with a different, relevant learning item for this subject.",
@@ -448,7 +460,7 @@ class LearningBackend:
             category,
             instruction,
             follow_up=follow_up,
-            expected_type=random.choice(("theory", "mcq", "subjective")),
+            expected_type=random.choice(self.learning_types),
         )
 
     @staticmethod
