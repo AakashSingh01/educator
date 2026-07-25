@@ -23,7 +23,7 @@ class LearningBackend:
         self.score=0
         self.events=[]
         self.answered_step_ids=set()
-        self.conversation_history=[]
+        self.ask_history=[]
         self.steps=[]
         self.learning_context=None
         self.learning_scope=""
@@ -324,7 +324,7 @@ class LearningBackend:
         if timer_preset not in TIMER_PRESETS:
             raise ValueError("Choose a valid timer preset.")
         self.steps.clear()
-        self.conversation_history.clear()
+        self.ask_history.clear()
         self.learning_context = self.select_learning_context(category, scope)
         self.learning_scope = scope
         self.learning_types = allowed_types
@@ -428,20 +428,13 @@ class LearningBackend:
             "Keep all content accurate, age-appropriate, and relevant."
         )
         system_prompt = "You are a helpful education assistant. Return valid JSON only; do not use Markdown fences."
-        # Keep two complete learner/model turns so follow-up questions have context.
         response = self.llm.chat(
             prompt,
             system_prompt=system_prompt,
-            history=self.conversation_history[-4:],
         )
         step = self._parse_generated_step(response, expected_type)
         step["time_limit"] = get_time_limit(self.timer_preset, expected_type)
         self.steps.append(step)
-        self.conversation_history.extend((
-            {"role": "user", "content": thought.strip()},
-            {"role": "assistant", "content": self._step_memory(step)},
-        ))
-        self.conversation_history = self.conversation_history[-4:]
         return len(self.steps) - 1
 
     def _learning_context_notes(self):
@@ -458,10 +451,8 @@ class LearningBackend:
         )
 
     def generate_follow_up_step(self, category, comment):
-        """Use an optional learner comment, or create a random related next item."""
-        if isinstance(comment, str) and comment.strip():
-            return self._generate_random_step(category, comment, follow_up=True)
-        # A blank Next means the learner wants a fresh item, so sample another note in the selected scope.
+        """Create a fresh item from a newly selected note in the current learning scope."""
+        self.ask_history.clear()
         self.learning_context = self.select_learning_context(
             category,
             self.learning_scope,
@@ -469,9 +460,56 @@ class LearningBackend:
         )
         return self._generate_random_step(
             category,
-            "Continue with a different, relevant learning item for this subject.",
-            follow_up=True,
+            "Create a new relevant learning item for this subject.",
         )
+
+    def ask_about_result(self, category, step, question):
+        """Answer a learner's counter-question using only the result-focused chat memory."""
+        if not isinstance(question, str) or not question.strip():
+            raise ValueError("Enter a question before asking.")
+        if not isinstance(step, dict) or step.get("type") not in {PageType.MCQ, PageType.SUBJECTIVE}:
+            raise ValueError("Ask is available after a question has been submitted.")
+
+        if step["type"] == PageType.MCQ:
+            result_context = (
+                f"Question: {step['question']}\n"
+                f"Correct answer: {step['options'][step['answer']]}\n"
+                f"Explanation: {step.get('explanation', '')}"
+            )
+        else:
+            result_context = (
+                f"Question: {step['question']}\n"
+                f"Suggested answer: {step.get('sample_answer', '')}"
+            )
+
+        prompt = (
+            f"Subject: {category}\nStudy scope: {self.get_learning_context_label() or category}\n"
+            f"Result being discussed:\n{result_context}\n\n"
+            f"Learner asks: {question.strip()}\n\n"
+            'Return exactly JSON as {"answer":"a clear, concise helpful response"}. '
+            "Answer the learner's counter-question directly and use the result context."
+        )
+        response = self.llm.chat(
+            prompt,
+            system_prompt="You are a helpful education assistant. Return valid JSON only.",
+            history=self.ask_history[-4:],
+        )
+        try:
+            response_text = response.strip() if isinstance(response, str) else response
+            if isinstance(response_text, str) and response_text.startswith("```"):
+                response_text = response_text.split("\n", 1)[-1].rsplit("```", 1)[0].strip()
+            answer = json.loads(response_text).get("answer")
+        except (AttributeError, TypeError, json.JSONDecodeError) as error:
+            raise ValueError("The model did not return a valid answer. Please try again.") from error
+        if not isinstance(answer, str) or not answer.strip():
+            raise ValueError("The model returned an empty answer. Please try again.")
+
+        self.ask_history.extend((
+            {"role": "user", "content": question.strip()},
+            {"role": "assistant", "content": answer.strip()},
+        ))
+        self.ask_history = self.ask_history[-4:]
+        return answer.strip()
 
     def _generate_random_step(self, category, instruction, follow_up=False):
         return self.generate_step(
@@ -625,7 +663,6 @@ class LearningBackend:
         response = self.llm.chat(
             prompt,
             system_prompt="You are a fair educational assessor. Return valid JSON only; do not use Markdown fences.",
-            history=self.conversation_history[-4:],
         )
         try:
             result = json.loads(response)

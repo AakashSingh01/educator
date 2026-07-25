@@ -25,6 +25,7 @@ defaults = {
     "learning_timer": "Normal",
     "learning_types": list(QUESTION_MODE_TYPES["Both"]),
     "is_generating": False,
+    "ask_messages": [],
 }
 for k,v in defaults.items():
     st.session_state.setdefault(k,v)
@@ -42,7 +43,7 @@ def reset_chapter(category, scope="", allowed_types=None, timer_preset="Normal")
     st.session_state.end_time = None
     st.session_state.timeout_sent = False
     st.session_state.last_submit = None
-    st.session_state.learner_thought = ""
+    st.session_state.ask_messages = []
     st.session_state.is_generating = False
     st.session_state.learning_timer = timer_preset
     st.session_state.learning_types = list(allowed_types)
@@ -59,6 +60,7 @@ def start_learning_scope(scope):
     st.session_state.timeout_sent = False
     st.session_state.last_submit = None
     st.session_state.is_generating = False
+    st.session_state.ask_messages = []
 
 def mark_generating():
     """Pause timed auto-refresh before an LLM-backed button action runs."""
@@ -538,12 +540,6 @@ if st.button("Use selected learning area", key="use_learning_scope", on_click=ma
         st.session_state.is_generating = False
         st.error(str(error))
 
-learner_thought = st.text_input(
-    "Add a comment or ask a follow-up question (optional)",
-    placeholder="For example: Why is that true? Or: give me a similar question.",
-    key="learner_thought",
-)
-
 if timed_out and not st.session_state.timeout_sent:
     backend.on_event("time_expired",step_id=st.session_state.step)
     st.session_state.timeout_sent=True
@@ -557,7 +553,7 @@ def goto_next():
         with st.spinner("Creating the next item..."):
             st.session_state.step = backend.generate_follow_up_step(
                 st.session_state.category,
-                st.session_state.learner_thought,
+                "",
             )
     except ValueError as error:
         st.session_state.is_generating = False
@@ -571,6 +567,7 @@ def goto_next():
     st.session_state.timeout_sent=False
     st.session_state.last_submit=None
     st.session_state.is_generating=False
+    st.session_state.ask_messages=[]
     st.rerun()
 
 def show_submit_feedback():
@@ -587,6 +584,35 @@ def already_submitted():
     feedback = st.session_state.last_submit
     return bool(feedback and feedback.get("step") == st.session_state.step and feedback.get("submitted"))
 
+def render_ask_box(step):
+    if not already_submitted():
+        return
+
+    st.divider()
+    st.subheader("Ask")
+    st.caption("Ask a counter-question or request clarification about this result.")
+    for message in st.session_state.ask_messages:
+        if message.get("step") == st.session_state.step:
+            with st.chat_message(message["role"]):
+                st.write(message["content"])
+
+    with st.form(f"ask_form_{st.session_state.step}", clear_on_submit=True):
+        question = st.text_input("Ask about this result", placeholder="For example: Why is this answer correct?")
+        submitted = st.form_submit_button("Ask", on_click=mark_generating)
+    if submitted:
+        try:
+            with st.spinner("Preparing an answer..."):
+                answer = backend.ask_about_result(st.session_state.category, step, question)
+            st.session_state.ask_messages.extend((
+                {"step": st.session_state.step, "role": "user", "content": question.strip()},
+                {"step": st.session_state.step, "role": "assistant", "content": answer},
+            ))
+            st.session_state.is_generating = False
+            st.rerun()
+        except (ValueError, LLMError) as error:
+            st.session_state.is_generating = False
+            st.error(str(error))
+
 if step["type"]==PageType.THEORY:
     st.header(step["title"])
     st.write(step["content"])
@@ -601,6 +627,7 @@ elif step["type"]==PageType.MCQ:
     st.markdown(f'<div class="question-title">{escape(step["question"])}</div>', unsafe_allow_html=True)
     ans=st.radio("Select",step["options"],disabled=timed_out)
     show_submit_feedback()
+    render_ask_box(step)
     if timed_out:
         st.error("Time over. Press Next.")
     else:
@@ -634,6 +661,7 @@ elif step["type"]==PageType.SUBJECTIVE:
     st.markdown(f'<div class="question-title">{escape(step["question"])}</div>', unsafe_allow_html=True)
     txt=st.text_area("Answer",disabled=timed_out)
     show_submit_feedback()
+    render_ask_box(step)
     if timed_out:
         st.error("Time over. Press Next.")
     else:
