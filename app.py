@@ -48,20 +48,6 @@ def reset_chapter(category, scope="", allowed_types=None, timer_preset="Normal")
     st.session_state.learning_timer = timer_preset
     st.session_state.learning_types = list(allowed_types)
 
-def start_learning_scope(scope):
-    backend.start_course(
-        st.session_state.category,
-        scope,
-        st.session_state.learning_types,
-        st.session_state.learning_timer,
-    )
-    st.session_state.step = backend.generate_initial_step(st.session_state.category)
-    st.session_state.end_time = None
-    st.session_state.timeout_sent = False
-    st.session_state.last_submit = None
-    st.session_state.is_generating = False
-    st.session_state.ask_messages = []
-
 def mark_generating():
     """Pause timed auto-refresh before an LLM-backed button action runs."""
     st.session_state.is_generating = True
@@ -394,6 +380,18 @@ def inject_custom_styles():
             border-color: {UI_COLORS["primary_hover"]};
             color: #FFFFFF;
         }}
+        .stFormSubmitButton > button {{
+            background: {UI_COLORS["primary"]};
+            border-color: {UI_COLORS["primary"]};
+            color: #FFFFFF !important;
+            font-weight: 600;
+        }}
+        .stFormSubmitButton > button * {{ color: #FFFFFF !important; }}
+        .stFormSubmitButton > button:hover {{
+            background: {UI_COLORS["primary_hover"]};
+            border-color: {UI_COLORS["primary_hover"]};
+            color: #FFFFFF !important;
+        }}
         .stTextInput input, .stTextArea textarea {{
             background: rgba(255, 255, 255, 0.92) !important;
             border: 1px solid {UI_COLORS["border"]} !important;
@@ -524,22 +522,6 @@ with col3:
     if st.button("🏠 Home", use_container_width=True):
         st.session_state.show_home_dialog = True
 
-learning_scopes = backend.get_learning_scopes(st.session_state.category)
-selected_scope = st.selectbox(
-    "Learning area",
-    options=learning_scopes,
-    format_func=lambda scope: "Full subject (random prepared note)" if not scope else scope,
-    key=f"learning_scope_{st.session_state.category}",
-)
-if st.button("Use selected learning area", key="use_learning_scope", on_click=mark_generating):
-    try:
-        with st.spinner("Creating a learning item from the selected notes..."):
-            start_learning_scope(selected_scope)
-        st.rerun()
-    except (ValueError, LLMError) as error:
-        st.session_state.is_generating = False
-        st.error(str(error))
-
 if timed_out and not st.session_state.timeout_sent:
     backend.on_event("time_expired",step_id=st.session_state.step)
     st.session_state.timeout_sent=True
@@ -589,15 +571,13 @@ def render_ask_box(step):
         return
 
     st.divider()
-    st.subheader("Ask")
-    st.caption("Ask a counter-question or request clarification about this result.")
     for message in st.session_state.ask_messages:
         if message.get("step") == st.session_state.step:
             with st.chat_message(message["role"]):
                 st.write(message["content"])
 
     with st.form(f"ask_form_{st.session_state.step}", clear_on_submit=True):
-        question = st.text_input("Ask about this result", placeholder="For example: Why is this answer correct?")
+        question = st.text_input("Ask", placeholder="Why is this answer correct?")
         submitted = st.form_submit_button("Ask", on_click=mark_generating)
     if submitted:
         try:
