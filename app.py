@@ -195,15 +195,49 @@ def render_notes_preparation():
         st.session_state[picker_edit_key] = False
         st.session_state[last_navigation_key] = navigation
     if navigation == "Choose a topic to edit" and not st.session_state.get(picker_edit_key, False):
-        available_topics = backend.list_notes_topics(subject)
-        chosen_topic = st.selectbox(
-            "Available topic folders",
-            options=available_topics,
-            format_func=lambda path: subject if not path else f"{subject} / {path}",
-        )
-        if st.button("Open selected topic", key="open_notes_topic"):
+        browse_key = f"notes_browse_scope_{subject}"
+        st.session_state.setdefault(browse_key, "")
+        browse_scope = st.session_state[browse_key]
+        st.caption(f"Browsing: {subject if not browse_scope else f'{subject} / {browse_scope}'}")
+        browse_controls = st.columns(2)
+        if browse_controls[0].button("Use subject root", key=f"notes_browse_root_{subject}"):
+            st.session_state[browse_key] = ""
+            st.rerun()
+        if browse_controls[1].button(
+            "Go up one level", key=f"notes_browse_up_{subject}", disabled=not browse_scope
+        ):
+            st.session_state[browse_key] = browse_scope.rsplit("/", 1)[0] if "/" in browse_scope else ""
+            st.rerun()
+
+        direct_topics = backend.get_direct_learning_subtopics(subject, browse_scope)
+        if direct_topics:
+            topic_filter = st.text_input(
+                "Filter direct subtopics",
+                placeholder="Type to narrow the list",
+                key=f"notes_browse_filter_{subject}_{browse_scope}",
+            ).casefold()
+            matching_topics = [topic for topic in direct_topics if topic_filter in topic.casefold()]
+            max_visible_topics = 20
+            visible_topics = matching_topics[:max_visible_topics]
+            if len(matching_topics) > max_visible_topics:
+                st.caption(f"Showing the first {max_visible_topics} matches. Refine the filter to narrow further.")
+            if visible_topics:
+                next_topic = st.selectbox(
+                    "Direct subtopic",
+                    options=visible_topics,
+                    key=f"notes_browse_child_{subject}_{browse_scope}",
+                )
+                if st.button("Open subtopic", key=f"notes_browse_open_{subject}_{browse_scope}"):
+                    st.session_state[browse_key] = (
+                        f"{browse_scope}/{next_topic}" if browse_scope else next_topic
+                    )
+                    st.rerun()
+            else:
+                st.info("No direct subtopics match that filter.")
+
+        if st.button("Edit this topic", key="open_notes_topic"):
             try:
-                backend.select_notes_topic(subject, chosen_topic)
+                backend.select_notes_topic(subject, browse_scope)
                 st.session_state[picker_edit_key] = True
                 st.rerun()
             except ValueError as error:
