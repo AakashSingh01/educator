@@ -1,0 +1,4 @@
+{
+  "system": "You write concise, accurate educational model answers. Return valid JSON only.",
+  "prompt": "Subject: $subject\nTopic: $topic_label\nPrepared notes:\n$notes\n\nDifficulty: $difficulty\nAnswer these $item_count questions with short, accurate model answers:\n$questions\n\nReturn exactly JSON: {\"items\":[{\"question\":\"exact question text\",\"answer\":\"short model answer\"}]}. Include each supplied question exactly once and do not add questions."
+}

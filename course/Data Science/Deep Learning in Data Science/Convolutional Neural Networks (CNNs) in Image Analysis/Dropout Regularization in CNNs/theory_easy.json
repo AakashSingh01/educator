@@ -1,0 +1,32 @@
+{
+  "version": 1,
+  "type": "theory",
+  "difficulty": "easy",
+  "subject": "Data Science",
+  "topic": "Deep Learning in Data Science/Convolutional Neural Networks (CNNs) in Image Analysis/Dropout Regularization in CNNs",
+  "notes_hash": "3806803180ae42b7d23d45a366706800e700e10fe40228877bc8cf776027f382",
+  "items_per_difficulty": 5,
+  "generated_at": "2026-07-26T10:52:51.120945+00:00",
+  "items": [
+    {
+      "title": "What is dropout regularization?",
+      "content": "Dropout regularization is a technique used to prevent overfitting in Convolutional Neural Networks (CNNs). It involves randomly dropping out neurons during training, which helps the network learn multiple representations of the data."
+    },
+    {
+      "title": "How does pseudo-recession work in CNNs?",
+      "content": "When multiple neurons are dropped out simultaneously, it creates an environment where some inputs can be misclassified with a single neuron being 'zeroed-out'. This happens because the model is forced to learn multiple representations of the data and then switch between them when necessary."
+    },
+    {
+      "title": "Why is dropout regularization used to prevent overfitting?",
+      "content": "Dropout regularization is used to prevent overfitting in CNNs by reducing the impact of individual neurons on the output. When a neuron is dropped out, its weight and bias are set to zero, effectively removing its contribution to the output."
+    },
+    {
+      "title": "What are the advantages of using dropout regularization?",
+      "content": "The advantages of using dropout regularization include improved generalization, increased robustness, and simplified hyperparameter tuning. The dropout rate can be easily tuned to optimize model performance."
+    },
+    {
+      "title": "Can dropout regularization increase model complexity?",
+      "content": "Dropout regularization can increase computational costs due to the added complexity introduced by dropping out neurons during training."
+    }
+  ]
+}

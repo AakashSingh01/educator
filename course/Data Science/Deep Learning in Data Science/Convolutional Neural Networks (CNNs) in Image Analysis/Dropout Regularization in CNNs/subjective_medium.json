@@ -5,27 +5,28 @@
   "subject": "Data Science",
   "topic": "Deep Learning in Data Science/Convolutional Neural Networks (CNNs) in Image Analysis/Dropout Regularization in CNNs",
   "notes_hash": "3806803180ae42b7d23d45a366706800e700e10fe40228877bc8cf776027f382",
-  "generated_at": "2026-07-26T10:15:06.210781+00:00",
+  "items_per_difficulty": 5,
+  "generated_at": "2026-07-26T10:59:18.627317+00:00",
   "items": [
     {
-      "question": "How does the dropout rate affect model performance?",
-      "answer": "A higher dropout rate can lead to decreased performance on the test set, while a lower dropout rate may result in overfitting to the training data."
+      "question": "How does the dropout rate affect the performance of a CNN?",
+      "answer": "A higher dropout rate can help prevent overfitting, but may also lead to decreased performance on the test set."
     },
     {
-      "question": "What is the difference between dropout and L1/L2 regularization?",
-      "answer": "Dropout randomly drops out neurons during training, whereas L1/L2 regularization adds a penalty term to the loss function to discourage large weights."
+      "question": "What is the difference between L1 and L2 regularization and dropout regularization?",
+      "answer": "L1 and L2 regularization penalize model weights, while dropout randomly drops out neurons during training."
     },
     {
-      "question": "In what situations is dropout regularization particularly effective?",
-      "answer": "Dropout regularization is particularly effective in preventing overfitting on complex datasets and when the model has many parameters."
+      "question": "Can you explain why dropout regularization makes models more robust to noise and outliers?",
+      "answer": "Dropout introduces pseudo-recession, forcing the model to learn multiple representations of the data."
     },
     {
-      "question": "Can dropout regularization be used with other regularization techniques?",
-      "answer": "Yes, dropout regularization can be used in conjunction with other regularization techniques such as L1/L2 regularization for improved performance."
+      "question": "How does dropout regularization simplify hyperparameter tuning compared to other regularization techniques?",
+      "answer": "The dropout rate is a single hyperparameter that can be tuned easily."
     },
     {
-      "question": "How does dropout regularization simplify hyperparameter tuning?",
-      "answer": "The dropout rate is a single hyperparameter that can be easily tuned, making it simpler to optimize model performance."
+      "question": "What are some potential drawbacks of using dropout regularization with deep neural networks?",
+      "answer": "Decreased training speed, increased computational cost, and overfitting on training data are potential drawbacks."
     }
   ]
 }

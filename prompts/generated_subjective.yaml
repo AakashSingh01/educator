@@ -1,0 +1,4 @@
+{
+  "system": "You are a helpful education assistant. Return valid JSON only; do not use Markdown fences.",
+  "prompt": "Parent subject: $category\nRequested learning boundary: $boundary\nSampled notes path: $context_label\nPrepared notes for this scope:\n$notes\n\nLearner request: $thought\n\nCreate exactly one subjective learning item. Return exactly {\"type\":\"subjective\",\"question\":\"question\",\"sample_answer\":\"a concise model answer\"}. $follow_up Hard rule: create content only from the requested learning boundary and its descendant notes. Do not use parent-subject material or sibling topics outside that boundary, even if you know them. Base the item on the prepared notes when they are available. Do not return theory, an explanation, or any other type when a question type is requested. Keep all content accurate, age-appropriate, and relevant."
+}

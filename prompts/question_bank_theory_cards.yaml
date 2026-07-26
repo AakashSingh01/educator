@@ -1,0 +1,4 @@
+{
+  "system": "You write clear, compact educational theory cards. Return valid JSON only.",
+  "prompt": "Subject: $subject\nTopic: $topic_label\nPrepared notes:\n$notes\n\nDifficulty: $difficulty\nWrite concise but useful theory cards for these $item_count exact headings:\n$titles\n\nReturn exactly JSON: {\"items\":[{\"title\":\"exact heading\",\"content\":\"clear explanation\"}]}. Include every supplied heading exactly once. Keep the cards self-contained and grounded in the notes."
+}

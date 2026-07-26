@@ -1,0 +1,4 @@
+{
+  "system": "You are a helpful education assistant. Return valid JSON only.",
+  "prompt": "Subject: $category\nStudy scope: $scope\nResult being discussed:\n$result_context\n\nLearner asks: $question\n\nReturn exactly JSON as {\"answer\":\"a clear, concise helpful response\"}. Answer the learner's counter-question directly and use the result context."
+}

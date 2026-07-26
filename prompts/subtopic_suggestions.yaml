@@ -1,0 +1,4 @@
+{
+  "system": "You design concise, non-overlapping educational topic outlines. Return valid JSON only.",
+  "prompt": "Subject: $subject\nTopic: $topic_label\nNotes:\n$notes\n\nAdditional instruction: $instruction\n\nSuggest 3 to 8 direct subtopics for a study-notes folder structure. Return exactly JSON as {\"subtopics\":[\"Topic one\",\"Topic two\"]}. Suggest only direct children, not grandchildren, and avoid duplicates or topics already adequately covered in the parent notes."
+}

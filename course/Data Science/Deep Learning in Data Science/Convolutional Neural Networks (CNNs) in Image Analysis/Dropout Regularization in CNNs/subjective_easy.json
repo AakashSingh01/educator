@@ -5,27 +5,28 @@
   "subject": "Data Science",
   "topic": "Deep Learning in Data Science/Convolutional Neural Networks (CNNs) in Image Analysis/Dropout Regularization in CNNs",
   "notes_hash": "3806803180ae42b7d23d45a366706800e700e10fe40228877bc8cf776027f382",
-  "generated_at": "2026-07-26T10:14:54.404509+00:00",
+  "items_per_difficulty": 5,
+  "generated_at": "2026-07-26T10:59:18.625190+00:00",
   "items": [
     {
-      "question": "What is dropout regularization in CNNs?",
-      "answer": "Dropout regularization is a technique used to prevent overfitting in Convolutional Neural Networks (CNNs) by randomly dropping out neurons during training, forcing the network to learn multiple representations of the data."
+      "question": "What is dropout regularization?",
+      "answer": "Dropout regularization is a technique used to prevent overfitting in Convolutional Neural Networks (CNNs) by randomly dropping out neurons during training."
     },
     {
-      "question": "How does pseudo-recession occur in dropout regularization?",
-      "answer": "Pseudo-recession occurs when multiple neurons are dropped out simultaneously, creating an environment where some inputs can be misclassified with a single neuron being 'zeroed-out', which helps the model learn multiple representations of the data."
+      "question": "How does dropout regularization prevent overfitting?",
+      "answer": "When a neuron is dropped out, its weight and bias are set to zero, removing its contribution to the output of the layer, which helps the network learn multiple representations of the data."
     },
     {
-      "question": "Can dropout regularization improve model robustness?",
-      "answer": "Yes, dropout regularization makes models more robust to noise and outliers in the training data by introducing pseudo-recession into the model."
+      "question": "What is pseudo-recession in dropout regularization?",
+      "answer": "Pseudo-recession occurs when multiple neurons are dropped out simultaneously, creating an environment where some inputs can be misclassified with a single neuron being 'zeroed-out', forcing the model to learn multiple representations of the data."
     },
     {
-      "question": "Why is dropout regularization used to prevent overfitting?",
-      "answer": "Dropout regularization is used to prevent overfitting because it forces the network to learn multiple representations of the data, rather than relying on a single neuron or set of neurons, thus reducing the risk of overfitting."
+      "question": "What are some advantages of using dropout regularization?",
+      "answer": "Dropout regularization improves generalization, increases robustness to noise and outliers, and simplifies hyperparameter tuning with a single adjustable parameter."
     },
     {
-      "question": "What are the potential disadvantages of using dropout regularization?",
-      "answer": "The potential disadvantages of using dropout regularization include decreased training speed, increased computational cost, and potentially overfitting to the training data if not enough dropout is applied."
+      "question": "Can you give an example of how dropout regularization can improve model generalization?",
+      "answer": "By randomly dropping out neurons during training, dropout regularization helps the network learn multiple representations of the data, reducing overfitting and improving its ability to generalize to new, unseen data."
     }
   ]
 }

@@ -1,0 +1,4 @@
+{
+  "system": "You are a fair educational assessor. Return valid JSON only; do not use Markdown fences.",
+  "prompt": "Subject: $category\nQuestion: $question\nModel answer: $model_answer\nLearner answer: $learner_answer\n\nAssess whether the learner answer is substantively correct. Accept equivalent wording and do not penalize minor grammar or spelling errors. Return exactly this JSON object: {\"correct\":true,\"feedback\":\"brief helpful feedback\"}. Set correct to false when the answer is missing a key idea or is incorrect."
+}
