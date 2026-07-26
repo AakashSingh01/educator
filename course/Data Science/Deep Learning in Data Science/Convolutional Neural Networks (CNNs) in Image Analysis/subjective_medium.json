@@ -1,0 +1,31 @@
+{
+  "version": 1,
+  "type": "subjective",
+  "difficulty": "medium",
+  "subject": "Data Science",
+  "topic": "Deep Learning in Data Science/Convolutional Neural Networks (CNNs) in Image Analysis",
+  "notes_hash": "548180e166a511777d662f29857c35954c52ccac078a04cf56874928c41e90bf",
+  "generated_at": "2026-07-26T09:48:28.056307+00:00",
+  "items": [
+    {
+      "question": "How do convolutional layers and fully connected layers work together in a CNN?",
+      "answer": "Convolutional layers perform spatial convolutions to extract features from the input image, while fully connected layers classify the output into predefined classes."
+    },
+    {
+      "question": "What is the difference between max pooling and average pooling?",
+      "answer": "Max pooling reduces spatial dimensions by taking the maximum value across each region, whereas average pooling takes the mean value."
+    },
+    {
+      "question": "In what ways can CNNs be used for image segmentation tasks?",
+      "answer": "CNNs are used for image segmentation through architectures such as U-Net and Convolutional Autoencoders (CAE), which perform pixel-wise classification to separate objects from the background."
+    },
+    {
+      "question": "How does batch normalization improve training stability in deep neural networks?",
+      "answer": "Batch normalization normalizes input data for each layer, reducing the effect of internal covariate shift and improving training stability by speeding up convergence."
+    },
+    {
+      "question": "Can CNNs be combined with Recurrent Neural Networks (RNNs) to create a hybrid architecture?",
+      "answer": "Yes, CNNs can be combined with RNNs to create hybrid architectures for sequential data such as videos or text images, allowing the network to model temporal relationships."
+    }
+  ]
+}

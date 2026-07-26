@@ -1,0 +1,31 @@
+{
+  "version": 1,
+  "type": "subjective",
+  "difficulty": "hard",
+  "subject": "Data Science",
+  "topic": "Machine Learning Algorithms",
+  "notes_hash": "6a60ea218d27f294873ed0cf016d341c01a742d147454410ba336794173c4f83",
+  "generated_at": "2026-07-26T09:48:57.311287+00:00",
+  "items": [
+    {
+      "question": "What are some real-world applications of reinforcement learning?",
+      "answer": "Reinforcement learning has numerous real-world applications, including robotics, game playing, autonomous vehicles, and personalized recommendations."
+    },
+    {
+      "question": "How does regularization affect model complexity?",
+      "answer": "Regularization reduces model complexity by adding a penalty term to the loss function, which discourages overfitting and promotes simpler models."
+    },
+    {
+      "question": "Can you describe the limitations of decision trees?",
+      "answer": "Decision trees have several limitations, including overfitting, lack of interpretability, and difficulty in handling high-dimensional data."
+    },
+    {
+      "question": "How do ensemble methods handle overfitting?",
+      "answer": "Ensemble methods like bagging and boosting help mitigate overfitting by combining multiple models and reducing the impact of individual errors."
+    },
+    {
+      "question": "What is the relationship between bias and variance in machine learning algorithms?",
+      "answer": "The bias-variance tradeoff refers to the balance between model complexity and error; high bias means underfitting, while high variance means overfitting."
+    }
+  ]
+}

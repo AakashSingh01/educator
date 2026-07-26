@@ -606,7 +606,9 @@ class LearningBackend:
                 generated_files += 1
         return {"topic": relative_topic, "status": "generated", "files": generated_files}
 
-    def prepare_question_banks(self, subject, scope="", max_workers=PREPARATION_WORKERS, overwrite=False):
+    def prepare_question_banks(
+        self, subject, scope="", max_workers=PREPARATION_WORKERS, overwrite=False, progress_callback=None
+    ):
         """Prepare reusable items for all saved notes in a topic subtree.
 
         The model client is passed to worker processes only when it can be safely
@@ -627,7 +629,20 @@ class LearningBackend:
         }
         if not topics:
             summary["skipped"].append({"topic": scope, "message": "No notes.txt files were found."})
+            if callable(progress_callback):
+                try:
+                    progress_callback(0, 0, summary["skipped"][0])
+                except Exception:
+                    pass
             return summary
+
+        def report_progress(completed, result):
+            if callable(progress_callback):
+                try:
+                    progress_callback(completed, len(topics), result)
+                except Exception:
+                    # Progress reporting must never interrupt question preparation.
+                    pass
 
         try:
             workers = max(1, int(max_workers))
@@ -651,6 +666,7 @@ class LearningBackend:
                     sequential_results.append(self.prepare_topic_question_bank(subject, topic, overwrite))
                 except Exception as error:
                     sequential_results.append({"topic": topic, "status": "failed", "message": str(error)})
+                report_progress(len(sequential_results), sequential_results[-1])
             return sequential_results
 
         results = []
@@ -671,6 +687,7 @@ class LearningBackend:
                             results.append(future.result())
                         except Exception as error:
                             results.append({"topic": topic, "status": "failed", "message": str(error)})
+                        report_progress(len(results), results[-1])
             except (OSError, RuntimeError) as error:
                 summary["workers"] = 1
                 summary["parallel_fallback"] = (

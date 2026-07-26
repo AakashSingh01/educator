@@ -1,0 +1,31 @@
+{
+  "version": 1,
+  "type": "subjective",
+  "difficulty": "easy",
+  "subject": "Data Science",
+  "topic": "Deep Learning in Data Science/Convolutional Neural Networks (CNNs) in Image Analysis/Dropout Regularization in CNNs",
+  "notes_hash": "3806803180ae42b7d23d45a366706800e700e10fe40228877bc8cf776027f382",
+  "generated_at": "2026-07-26T09:49:25.725961+00:00",
+  "items": [
+    {
+      "question": "What is the primary goal of dropout regularization in CNNs?",
+      "answer": "The primary goal of dropout regularization in CNNs is to prevent overfitting by randomly dropping out neurons during training, thus forcing the network to learn multiple representations of the data."
+    },
+    {
+      "question": "How does dropout regularization help prevent overfitting?",
+      "answer": "Dropout regularization helps prevent overfitting by removing the contribution of dropped-out neurons to the output of the layer, creating an environment where some inputs can be misclassified and forcing the model to learn multiple representations of the data."
+    },
+    {
+      "question": "What is pseudo-recession in the context of dropout regularization?",
+      "answer": "Pseudo-recession occurs when multiple neurons are dropped out simultaneously, creating an environment where some inputs can be misclassified with a single neuron being 'zeroed-out', thus increasing robustness."
+    },
+    {
+      "question": "Why is dropout regularization more effective than other regularization techniques?",
+      "answer": "Dropout regularization is more effective due to its ability to introduce pseudo-recession into the model, which helps improve generalization and increases robustness."
+    },
+    {
+      "question": "Can you explain how dropout regularization makes models more robust?",
+      "answer": "Dropout regularization makes models more robust by randomly dropping out neurons during training, forcing the network to learn multiple representations of the data and increasing its ability to handle noise and outliers in the training data."
+    }
+  ]
+}

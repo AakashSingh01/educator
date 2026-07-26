@@ -1,0 +1,31 @@
+{
+  "version": 1,
+  "type": "subjective",
+  "difficulty": "easy",
+  "subject": "Data Science",
+  "topic": "Machine Learning Algorithms",
+  "notes_hash": "6a60ea218d27f294873ed0cf016d341c01a742d147454410ba336794173c4f83",
+  "generated_at": "2026-07-26T09:47:57.394289+00:00",
+  "items": [
+    {
+      "question": "What is machine learning?",
+      "answer": "Machine learning is a type of artificial intelligence that enables systems to automatically improve their performance on a task without being explicitly programmed."
+    },
+    {
+      "question": "How does supervised learning work?",
+      "answer": "Supervised learning involves training an algorithm using labeled data, where the correct output is already known. The algorithm learns to map inputs to outputs and makes predictions on new, unseen data."
+    },
+    {
+      "question": "What is a hyperparameter?",
+      "answer": "A hyperparameter is a parameter that is set before training a model, such as learning rate or regularization strength."
+    },
+    {
+      "question": "Can you give an example of reinforcement learning?",
+      "answer": "Reinforcement learning involves training an algorithm through trial and error, receiving feedback in the form of rewards or penalties for its actions. An example is playing a game where the goal is to maximize rewards."
+    },
+    {
+      "question": "What are some common applications of decision trees?",
+      "answer": "Decision trees are commonly used in classification and regression tasks, such as image classification, product recommendation systems, and predicting customer churn."
+    }
+  ]
+}

@@ -221,12 +221,27 @@ def render_question_preparation_run(subject):
         key=f"question_prep_start_{subject}",
     ):
         try:
+            progress_bar = st.progress(0, text="Finding notes topics to prepare...")
+
+            def update_question_preparation_progress(completed, total, result):
+                if not total:
+                    progress_bar.progress(100, text="No notes topics found.")
+                    return
+                topic_label = result.get("topic") or subject
+                progress_bar.progress(
+                    int(completed * 100 / total),
+                    text=f"Prepared {completed} of {total} topic folders: {topic_label}",
+                )
+
             with st.spinner("Preparing reusable questions and theory cards. This can take a little while..."):
                 summary = backend.prepare_question_banks(
                     subject,
                     selected_scope,
                     overwrite=run_action == "Regenerate for all",
-            )
+                    progress_callback=update_question_preparation_progress,
+                )
+            if summary["topics"]:
+                progress_bar.progress(100, text="Question preparation complete.")
             st.success(
                 f"Question preparation finished across {summary['topics']} notes topic(s): "
                 f"{summary['generated']} topic(s) generated, "
