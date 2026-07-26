@@ -5,27 +5,27 @@
   "subject": "Data Science",
   "topic": "Deep Learning in Data Science/Convolutional Neural Networks (CNNs) in Image Analysis",
   "notes_hash": "548180e166a511777d662f29857c35954c52ccac078a04cf56874928c41e90bf",
-  "generated_at": "2026-07-26T09:48:28.056307+00:00",
+  "generated_at": "2026-07-26T10:05:53.622373+00:00",
   "items": [
     {
-      "question": "How do convolutional layers and fully connected layers work together in a CNN?",
-      "answer": "Convolutional layers perform spatial convolutions to extract features from the input image, while fully connected layers classify the output into predefined classes."
+      "question": "Describe how fully connected layers are used in conjunction with convolutional layers.",
+      "answer": "Fully connected layers are used to classify the output of convolutional layers into predefined classes, typically at the end of a CNN architecture. They take the feature maps from convolutional and pooling layers as input and produce an output probability distribution over all possible classes."
     },
     {
-      "question": "What is the difference between max pooling and average pooling?",
-      "answer": "Max pooling reduces spatial dimensions by taking the maximum value across each region, whereas average pooling takes the mean value."
+      "question": "How does the use of pooling layers impact the number of parameters in a neural network?",
+      "answer": "Pooling layers reduce the spatial dimensions of the feature maps, which decreases the number of parameters in the subsequent convolutional layers. This reduces computational cost and memory requirements, as there are fewer weights to be learned."
     },
     {
-      "question": "In what ways can CNNs be used for image segmentation tasks?",
-      "answer": "CNNs are used for image segmentation through architectures such as U-Net and Convolutional Autoencoders (CAE), which perform pixel-wise classification to separate objects from the background."
+      "question": "Explain the concept of kernel size in convolutional layers.",
+      "answer": "Kernel size, also known as filter size, refers to the number of pixels in a small square window that slides over the input image during convolution. A larger kernel size captures more spatial information but may increase computational cost and risk of overfitting."
     },
     {
-      "question": "How does batch normalization improve training stability in deep neural networks?",
-      "answer": "Batch normalization normalizes input data for each layer, reducing the effect of internal covariate shift and improving training stability by speeding up convergence."
+      "question": "Discuss the differences between max pooling and average pooling.",
+      "answer": "Max pooling reduces feature maps by taking the maximum value across each region, whereas average pooling takes the mean. Max pooling is often preferred for preserving high-frequency features, while average pooling is used for downsampling and reducing dimensionality without losing significant information."
     },
     {
-      "question": "Can CNNs be combined with Recurrent Neural Networks (RNNs) to create a hybrid architecture?",
-      "answer": "Yes, CNNs can be combined with RNNs to create hybrid architectures for sequential data such as videos or text images, allowing the network to model temporal relationships."
+      "question": "What is the role of activation functions in enabling learning of complex relationships?",
+      "answer": "Activation functions introduce non-linearity into the network, allowing it to learn complex relationships between inputs and outputs. Commonly used activation functions include ReLU, Sigmoid, and Tanh, each with its own strengths and weaknesses."
     }
   ]
 }

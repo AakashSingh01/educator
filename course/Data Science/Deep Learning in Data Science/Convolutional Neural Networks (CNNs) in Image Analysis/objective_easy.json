@@ -1,0 +1,71 @@
+{
+  "version": 1,
+  "type": "mcq",
+  "difficulty": "easy",
+  "subject": "Data Science",
+  "topic": "Deep Learning in Data Science/Convolutional Neural Networks (CNNs) in Image Analysis",
+  "notes_hash": "548180e166a511777d662f29857c35954c52ccac078a04cf56874928c41e90bf",
+  "generated_at": "2026-07-26T10:07:05.393499+00:00",
+  "items": [
+    {
+      "question": "What is the primary function of convolutional layers in a CNN?",
+      "options": [
+        "Extract features from images",
+        "Find objects in images",
+        "Classify images",
+        "Localize objects in images"
+      ],
+      "correct_option": "Extract features from images",
+      "explanation": "Convolutional layers are designed to extract features from input images, such as edges, lines, and shapes.",
+      "reason": "This is the primary function of convolutional layers, which enables the network to learn complex representations of visual data."
+    },
+    {
+      "question": "How does pooling layer reduce the number of parameters in a network?",
+      "options": [
+        "By increasing spatial dimensions",
+        "By reducing spatial dimensions",
+        "Increases computational cost",
+        "Decreases model capacity"
+      ],
+      "correct_option": "By reducing spatial dimensions",
+      "explanation": "Pooling layers downsample feature maps by reducing spatial dimensions, which reduces the number of parameters and computational cost in the network.",
+      "reason": "Pooling helps to decrease the spatial dimensions of the feature maps, resulting in fewer parameters for the network to learn."
+    },
+    {
+      "question": "What is the purpose of fully connected layers after convolutional and pooling layers?",
+      "options": [
+        "To extract features from images",
+        "To classify objects",
+        "To localize objects in images",
+        "To perform object detection tasks"
+      ],
+      "correct_option": "To localize objects in images",
+      "explanation": "Fully connected layers are used as the final classification layer, where they map the output of the convolutional and pooling layers to a probability distribution over all possible classes.",
+      "reason": "The purpose of fully connected layers is to classify the output of the network into predefined classes."
+    },
+    {
+      "question": "In which type of neural network are recurrent connections typically found?",
+      "options": [
+        "Recurrent Neural Networks (RNNs)",
+        "Convolutional Neural Networks (CNNs)",
+        "Long Short-Term Memory (LSTM) networks",
+        "Feedforward Neural Networks (FNNs)"
+      ],
+      "correct_option": "Recurrent Neural Networks (RNNs)",
+      "explanation": "Recurrent connections, such as those found in RNNs and LSTM networks, are used to model sequential data and capture temporal dependencies.",
+      "reason": "RNNs and their variants are designed to handle sequential data, making them well-suited for tasks like natural language processing and speech recognition."
+    },
+    {
+      "question": "What is the main difference between max pooling and average pooling?",
+      "options": [
+        "Max pooling reduces spatial dimensions by taking the maximum value at each position",
+        "Average pooling reduces spatial dimensions by taking the mean value at each position",
+        "Max pooling increases computational cost",
+        "Average pooling decreases model capacity"
+      ],
+      "correct_option": "Max pooling reduces spatial dimensions by taking the maximum value at each position",
+      "explanation": "The key difference between max pooling and average pooling is that max pooling preserves non-linear relationships, while average pooling smooths them out.",
+      "reason": "Max pooling takes the maximum value at each position, which helps preserve non-linear features in the data, whereas average pooling calculates the mean value, reducing the impact of these features."
+    }
+  ]
+}

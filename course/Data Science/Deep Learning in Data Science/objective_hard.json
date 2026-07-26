@@ -1,0 +1,71 @@
+{
+  "version": 1,
+  "type": "mcq",
+  "difficulty": "hard",
+  "subject": "Data Science",
+  "topic": "Deep Learning in Data Science",
+  "notes_hash": "059da4dd160a27ecc9939e323e195264072a3f87120828df3fe7fe2ff299b845",
+  "generated_at": "2026-07-26T10:09:36.333938+00:00",
+  "items": [
+    {
+      "question": "While Batch Normalization normalizes input data, it does not change the underlying statistical properties of the data in terms of mean or variance, so what is its primary effect on model stability?",
+      "options": [
+        "Increases model stability by reducing internal covariate shift",
+        "Decreases model performance by altering feature distributions",
+        "Has no significant impact on model stability due to normalization",
+        "Reduces model capacity through regularization"
+      ],
+      "correct_option": "Increases model stability by reducing internal covariate shift",
+      "explanation": "Batch Normalization normalizes input data for each layer, enhancing stability and speed during training. It doesn't change the underlying statistical properties of the data, so its primary effect is to increase model stability by reducing internal covariate shift.",
+      "reason": "Internal covariate shift refers to changes in the distribution of inputs to later layers due to earlier layers' activations. Normalization helps mitigate this effect."
+    },
+    {
+      "question": "The relationship between Deep Learning and Supervised Learning can be understood as a special case of what broader machine learning problem?",
+      "options": [
+        "Clustering",
+        "Regression",
+        "Classification",
+        "Feature Extraction"
+      ],
+      "correct_option": "Classification",
+      "explanation": "Supervised Learning involves training models on labeled datasets to predict outputs. Deep Learning is a subset of machine learning that specializes in the training of artificial neural networks, which can be used for classification tasks.",
+      "reason": "Classification is a type of supervised learning problem where the goal is to assign inputs into pre-defined categories or classes."
+    },
+    {
+      "question": "In the context of reinforcement learning, the agent's actions are often determined by an internal policy using which mathematical framework?",
+      "options": [
+        "Markov Decision Process (MDP)",
+        "Game Theory",
+        "Graph Neural Networks",
+        "Reinforcement Learning Algorithms"
+      ],
+      "correct_option": "Markov Decision Process (MDP)",
+      "explanation": "The Markov Decision Process (MDP) is a mathematical framework used to model decision-making problems in reinforcement learning. It defines the state and action spaces, rewards, and transitions between states.",
+      "reason": "The MDP provides a structured way to represent complex decision problems and can be solved using techniques like value iteration or policy iteration."
+    },
+    {
+      "question": "Unsupervised learning algorithms like k-means clustering group similar inputs together based on their distance relationships in a data space defined by which type of geometric measure?",
+      "options": [
+        "Euclidean Distance",
+        "Minkowski Distance",
+        "Cosine Similarity",
+        "Hamming Distance"
+      ],
+      "correct_option": "Euclidean Distance",
+      "explanation": "K-means clustering groups similar inputs together based on the Euclidean distance between their feature vectors. This method assumes that the data can be represented as points in a multi-dimensional space.",
+      "reason": "The Euclidean distance is a common metric used to measure the distance between two points in n-dimensional space, making it suitable for unsupervised learning algorithms like k-means."
+    },
+    {
+      "question": "The use of transfer learning implies that the pre-trained model has already learned to recognize and classify examples from what kind of dataset?",
+      "options": [
+        "Image datasets",
+        "Text datasets",
+        "Audio datasets",
+        "All of the above"
+      ],
+      "correct_option": "Audio datasets",
+      "explanation": "Transfer learning involves using a pre-trained model as a starting point for a new task. The pre-trained model is typically trained on a large, diverse dataset that includes examples from multiple domains, such as images, text, and audio.",
+      "reason": "The pre-trained model has already learned to recognize and classify examples from different types of datasets, making it suitable for transferring knowledge to related tasks."
+    }
+  ]
+}

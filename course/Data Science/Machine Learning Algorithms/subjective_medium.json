@@ -5,27 +5,27 @@
   "subject": "Data Science",
   "topic": "Machine Learning Algorithms",
   "notes_hash": "6a60ea218d27f294873ed0cf016d341c01a742d147454410ba336794173c4f83",
-  "generated_at": "2026-07-26T09:48:18.942301+00:00",
+  "generated_at": "2026-07-26T10:05:42.750873+00:00",
   "items": [
     {
-      "question": "How does bias-variance tradeoff affect model performance?",
-      "answer": "The bias-variance tradeoff affects model performance by balancing the error caused by an overly complex model (bias) with the error caused by an underfitting model (variance). A good balance allows for accurate predictions, while an imbalance can lead to poor performance."
+      "question": "How do ensemble methods improve model performance?",
+      "answer": "Ensemble methods combine multiple models to improve overall performance by reducing overfitting, increasing robustness, and enhancing feature representation."
     },
     {
-      "question": "What is the difference between bagging and boosting in ensemble methods?",
-      "answer": "Bagging and boosting are both ensemble methods used to improve model performance. Bagging creates multiple instances of a model on the same dataset, allowing each instance to make different predictions. Boosting, on the other hand, adds weights to individual predictions to produce a final prediction."
+      "question": "What are some real-world applications of decision trees?",
+      "answer": "Decision trees have applications in image classification, sentiment analysis, credit risk assessment, and medical diagnosis."
     },
     {
-      "question": "How do linear models differ from non-linear models?",
-      "answer": "Linear models assume a linear relationship between inputs and outputs, whereas non-linear models can capture complex relationships. Linear models use equations like y = mx + b, while non-linear models use equations with higher degrees of freedom, such as polynomial or sigmoid functions."
+      "question": "Can you explain the bias-variance tradeoff?",
+      "answer": "The bias-variance tradeoff refers to the balance between model complexity and simplicity, where overfitting (high bias) can lead to poor performance on unseen data and underfitting (low variance) can result in failure to capture important patterns."
     },
     {
-      "question": "Can you explain the concept of feature engineering in machine learning?",
-      "answer": "Feature engineering involves selecting and transforming relevant input variables to improve model performance. This can include scaling, normalization, or encoding categorical variables, as well as creating new features that capture important relationships."
+      "question": "How does feature selection impact machine learning models?",
+      "answer": "Feature selection improves model performance by reducing dimensionality, increasing interpretability, and minimizing the risk of overfitting to irrelevant features."
     },
     {
-      "question": "How do neural networks relate to deep learning?",
-      "answer": "Neural networks are a type of machine learning algorithm that consists of layers of interconnected nodes (neurons). Deep learning extends this concept by stacking multiple layers of neurons, allowing for complex representations and improved performance on certain tasks."
+      "question": "What is the difference between a model and a hyperparameter?",
+      "answer": "A model represents the underlying relationships between inputs and outputs, while a hyperparameter is a learned parameter that controls the learning process, such as the learning rate or regularization strength."
     }
   ]
 }

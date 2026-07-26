@@ -5,27 +5,27 @@
   "subject": "Data Science",
   "topic": "Machine Learning Algorithms",
   "notes_hash": "6a60ea218d27f294873ed0cf016d341c01a742d147454410ba336794173c4f83",
-  "generated_at": "2026-07-26T09:48:57.311287+00:00",
+  "generated_at": "2026-07-26T10:06:01.262785+00:00",
   "items": [
     {
-      "question": "What are some real-world applications of reinforcement learning?",
-      "answer": "Reinforcement learning has numerous real-world applications, including robotics, game playing, autonomous vehicles, and personalized recommendations."
+      "question": "How can you prevent overfitting in supervised learning?",
+      "answer": "Regularization techniques such as L1 or L2 regularization, dropout, and early stopping can help prevent overfitting by reducing the model’s capacity to fit the noise in the training data."
     },
     {
-      "question": "How does regularization affect model complexity?",
-      "answer": "Regularization reduces model complexity by adding a penalty term to the loss function, which discourages overfitting and promotes simpler models."
+      "question": "Can you describe a scenario where reinforcement learning would be suitable?",
+      "answer": "Reinforcement learning is suitable for situations where an agent needs to learn through trial and error, such as in game playing or robotics, where feedback is provided in the form of rewards or penalties."
     },
     {
-      "question": "Can you describe the limitations of decision trees?",
-      "answer": "Decision trees have several limitations, including overfitting, lack of interpretability, and difficulty in handling high-dimensional data."
+      "question": "How do natural language processing algorithms handle out-of-vocabulary words?",
+      "answer": "Natural language processing algorithms often use techniques such as word embeddings, subwording, or out-of-vocabulary (OOV) handling to deal with words that are not present in the training data."
     },
     {
-      "question": "How do ensemble methods handle overfitting?",
-      "answer": "Ensemble methods like bagging and boosting help mitigate overfitting by combining multiple models and reducing the impact of individual errors."
+      "question": "What are some potential downsides to using ensemble methods?",
+      "answer": "Some potential downsides to using ensemble methods include increased computational cost, difficulty in selecting the best combination of models, and the risk of introducing unnecessary noise into the final prediction."
     },
     {
-      "question": "What is the relationship between bias and variance in machine learning algorithms?",
-      "answer": "The bias-variance tradeoff refers to the balance between model complexity and error; high bias means underfitting, while high variance means overfitting."
+      "question": "In what ways do machine learning models learn from labeled data?",
+      "answer": "Machine learning models learn from labeled data by identifying patterns and relationships between the input features and output labels, allowing them to make predictions or take actions without explicit programming."
     }
   ]
 }

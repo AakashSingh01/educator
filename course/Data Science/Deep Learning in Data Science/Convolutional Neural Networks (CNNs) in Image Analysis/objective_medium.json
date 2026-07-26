@@ -1,0 +1,71 @@
+{
+  "version": 1,
+  "type": "mcq",
+  "difficulty": "medium",
+  "subject": "Data Science",
+  "topic": "Deep Learning in Data Science/Convolutional Neural Networks (CNNs) in Image Analysis",
+  "notes_hash": "548180e166a511777d662f29857c35954c52ccac078a04cf56874928c41e90bf",
+  "generated_at": "2026-07-26T10:08:53.210005+00:00",
+  "items": [
+    {
+      "question": "Which activation function is commonly used in CNNs to introduce non-linearity?",
+      "options": [
+        "ReLU (Rectified Linear Unit)",
+        "Sigmoid",
+        "Tanh",
+        "Softmax"
+      ],
+      "correct_option": "ReLU (Rectified Linear Unit)",
+      "explanation": "ReLU introduces non-linearity and allows the model to learn complex features.",
+      "reason": "Other options are also used in different contexts, but ReLU is widely adopted for CNNs."
+    },
+    {
+      "question": "How does batch normalization improve training stability?",
+      "options": [
+        "By reducing the impact of internal covariate shift",
+        "By increasing the capacity of the network",
+        "By speeding up computation",
+        "By decreasing the dimensionality"
+      ],
+      "correct_option": "By reducing the impact of internal covariate shift",
+      "explanation": "Batch normalization normalizes the input data, which reduces the internal covariate shift and improves training stability.",
+      "reason": "Internal covariate shift can lead to non-convex optimization problems, but batch normalization mitigates this issue."
+    },
+    {
+      "question": "What is the purpose of dropout in a deep neural network?",
+      "options": [
+        "To prevent overfitting",
+        "To speed up computation",
+        "To increase model capacity",
+        "To reduce dimensionality"
+      ],
+      "correct_option": "To prevent overfitting",
+      "explanation": "Dropout randomly sets a fraction rate of neurons to zero during training, which prevents the network from relying too heavily on individual neurons and reduces overfitting.",
+      "reason": "Other options are related to other benefits of dropout, but preventing overfitting is its primary purpose."
+    },
+    {
+      "question": "In what type of images are U-Net architectures typically applied?",
+      "options": [
+        "High-resolution images",
+        "Low-resolution images",
+        "Biomedical images",
+        "General-purpose images"
+      ],
+      "correct_option": "Biomedical images",
+      "explanation": "U-Net architectures are particularly well-suited for biomedical image segmentation tasks, where accurate boundary detection is crucial.",
+      "reason": "Other options may be applicable in certain contexts, but U-Net is specifically designed for biomedical image segmentation."
+    },
+    {
+      "question": "Can CNNs be combined with RNNs to create a hybrid architecture?",
+      "options": [
+        "Yes",
+        "No",
+        "Maybe",
+        "I don't know"
+      ],
+      "correct_option": "Yes",
+      "explanation": "CNNs and RNNs can be combined in various ways, such as temporal convolutional networks or spatial-temporal recurrent networks, to leverage the strengths of both architectures.",
+      "reason": "This is a valid technique used in certain applications, such as video analysis or speech recognition."
+    }
+  ]
+}

@@ -5,27 +5,27 @@
   "subject": "Data Science",
   "topic": "Deep Learning in Data Science/Convolutional Neural Networks (CNNs) in Image Analysis",
   "notes_hash": "548180e166a511777d662f29857c35954c52ccac078a04cf56874928c41e90bf",
-  "generated_at": "2026-07-26T09:48:48.790129+00:00",
+  "generated_at": "2026-07-26T10:06:13.089307+00:00",
   "items": [
     {
-      "question": "How do Convolutional Autoencoders (CAE) differ from CNNs?",
-      "answer": "Convolutional Autoencoders (CAE) are a type of neural network that learns to compress and reconstruct images, whereas CNNs are designed for image classification and object detection tasks. CAEs typically use an encoder-decoder architecture with a bottleneck layer, while CNNs use convolutional layers, pooling layers, and fully connected layers."
+      "question": "Compare and contrast CNNs with Convolutional Autoencoders (CAE) in terms of architecture and application.",
+      "answer": "CNNs and CAEs share a similar architecture, but differ in their design goals. CNNs are used for image classification, object detection, segmentation, and generation tasks, whereas CAEs are designed to learn compact representations of images while preserving their content. In terms of application, CNNs are widely used for various computer vision tasks, while CAEs are primarily used for data compression and feature extraction."
     },
     {
-      "question": "What is the role of dropout in preventing overfitting in deep neural networks like CNNs?",
-      "answer": "Dropout is a regularization technique used to prevent overfitting in deep neural networks like CNNs. It randomly sets a fraction rate of neurons to zero during training, forcing the network to rely on other neurons and improving its ability to generalize to new data."
+      "question": "How can Recurrent Neural Networks (RNNs) be combined with CNNs to create a hybrid architecture?",
+      "answer": "Hybrid architectures combine the strengths of RNNs and CNNs by using RNNs to process sequential data and CNNs to analyze spatial data. This is achieved through techniques like temporal convolution, where a 1D CNN is applied to a sequence, or using RNNs as a pre-processing step for image data."
     },
     {
-      "question": "In what ways can U-Net architectures be used for biomedical image segmentation tasks?",
-      "answer": "U-Net architectures are widely used for biomedical image segmentation tasks due to their ability to learn spatial hierarchies of features from images. They consist of a contractive path and an expansive path, which enables the network to capture contextual information and produce accurate segmentations."
+      "question": "Explain the concept of spatial dimensions and how it affects the performance of pooling layers.",
+      "answer": "Spatial dimensions refer to the number of pixels in an image. Pooling layers reduce these dimensions by taking the maximum or average value across adjacent regions, effectively downsampling the feature maps. This reduces the number of parameters and computational cost while preserving important features."
     },
     {
-      "question": "Can CNNs be used for tasks that require both classification and object detection?",
-      "answer": "Yes, CNNs can be modified to perform tasks that require both classification and object detection. This is achieved by adding an object detection module on top of the feature extraction layers, such as using a Faster R-CNN architecture."
+      "question": "Discuss the limitations of using dropout regularization in deep learning models.",
+      "answer": "Dropout regularization randomly sets a fraction rate of neurons to zero during training, preventing overfitting. However, it can also lead to decreased model performance on test data if the drop-out rate is too high or not sufficiently randomized."
     },
     {
-      "question": "How do transfer learning and pre-trained CNN models improve performance on new datasets?",
-      "answer": "Transfer learning and pre-trained CNN models improve performance on new datasets by leveraging knowledge gained from large, labeled datasets. The pre-trained model is fine-tuned on the new dataset, allowing it to adapt to the specific task and data distribution."
+      "question": "What is the relationship between CNNs and U-Net architectures in terms of image segmentation tasks?",
+      "answer": "CNNs are a fundamental component of U-Net architectures, which are designed for image segmentation tasks. U-Net's encoder-decoder structure uses CNNs to extract features from images, followed by a decoder network that refines these features through skip connections."
     }
   ]
 }

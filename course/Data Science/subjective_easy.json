@@ -3,29 +3,29 @@
   "type": "subjective",
   "difficulty": "easy",
   "subject": "Data Science",
-  "topic": ".",
+  "topic": "",
   "notes_hash": "2236da2ca0fde47fce5e6e1a67b0c34036eec66fe368721e218f19a50e379178",
-  "generated_at": "2026-07-26T09:48:12.943389+00:00",
+  "generated_at": "2026-07-26T10:05:17.859076+00:00",
   "items": [
     {
-      "question": "What is the primary goal of data science?",
-      "answer": "The primary goal of data science is to extract knowledge and insights from structured and unstructured data using scientific methods, processes, algorithms, and systems."
+      "question": "Data science involves using which scientific method to extract insights from data?",
+      "answer": "Scientific method"
     },
     {
-      "question": "What are the key activities involved in data science?",
-      "answer": "The key activities involved in data science include data preparation, data analysis, data visualization, and deployment."
+      "question": "Which process is used to discover patterns and relationships in large datasets?",
+      "answer": "Data Mining"
     },
     {
-      "question": "What is the main difference between machine learning and artificial intelligence?",
-      "answer": "Machine learning is a type of artificial intelligence that enables systems to learn from data without being explicitly programmed."
+      "question": "What term describes a type of artificial intelligence that enables systems to learn from data without being explicitly programmed?",
+      "answer": "Machine Learning"
     },
     {
-      "question": "Why is data preprocessing important in data analysis?",
-      "answer": "Data preprocessing is important because it involves cleaning, transforming, and formatting data for analysis, which helps ensure accuracy and reliability of results."
+      "question": "The development of computer systems able to perform tasks requiring human-like intelligence is known as",
+      "answer": "Artificial Intelligence (AI)"
     },
     {
-      "question": "How does data mining differ from other types of data analysis?",
-      "answer": "Data mining differs from other types of data analysis because it involves automatically discovering patterns, relationships, and insights from large datasets using specialized techniques and algorithms."
+      "question": "Why is big data difficult to process and analyze using traditional methods?",
+      "answer": "Because it is large"
     }
   ]
 }

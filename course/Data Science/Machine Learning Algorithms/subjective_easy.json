@@ -5,27 +5,27 @@
   "subject": "Data Science",
   "topic": "Machine Learning Algorithms",
   "notes_hash": "6a60ea218d27f294873ed0cf016d341c01a742d147454410ba336794173c4f83",
-  "generated_at": "2026-07-26T09:47:57.394289+00:00",
+  "generated_at": "2026-07-26T10:05:22.295227+00:00",
   "items": [
     {
       "question": "What is machine learning?",
       "answer": "Machine learning is a type of artificial intelligence that enables systems to automatically improve their performance on a task without being explicitly programmed."
     },
     {
-      "question": "How does supervised learning work?",
-      "answer": "Supervised learning involves training an algorithm using labeled data, where the correct output is already known. The algorithm learns to map inputs to outputs and makes predictions on new, unseen data."
+      "question": "How do supervised and unsupervised learning differ?",
+      "answer": "Supervised learning involves learning from labeled data, where the correct output is already known, whereas unsupervised learning involves learning from unlabeled data, identifying patterns and relationships without prior knowledge of the correct output."
     },
     {
-      "question": "What is a hyperparameter?",
-      "answer": "A hyperparameter is a parameter that is set before training a model, such as learning rate or regularization strength."
+      "question": "Can you give an example of a linear model?",
+      "answer": "Linear regression is a common example of a linear model, which uses a straight line to model the relationship between inputs and outputs."
     },
     {
-      "question": "Can you give an example of reinforcement learning?",
-      "answer": "Reinforcement learning involves training an algorithm through trial and error, receiving feedback in the form of rewards or penalties for its actions. An example is playing a game where the goal is to maximize rewards."
+      "question": "What is the purpose of regularization in machine learning?",
+      "answer": "Regularization is used to prevent overfitting by adding a penalty term to the loss function, controlling the complexity of the model."
     },
     {
-      "question": "What are some common applications of decision trees?",
-      "answer": "Decision trees are commonly used in classification and regression tasks, such as image classification, product recommendation systems, and predicting customer churn."
+      "question": "How does reinforcement learning work?",
+      "answer": "Reinforcement learning involves an agent learning through trial and error, receiving feedback in the form of rewards or penalties for its actions, to maximize a cumulative reward."
     }
   ]
 }

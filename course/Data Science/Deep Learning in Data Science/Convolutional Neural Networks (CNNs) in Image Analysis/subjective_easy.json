@@ -5,27 +5,27 @@
   "subject": "Data Science",
   "topic": "Deep Learning in Data Science/Convolutional Neural Networks (CNNs) in Image Analysis",
   "notes_hash": "548180e166a511777d662f29857c35954c52ccac078a04cf56874928c41e90bf",
-  "generated_at": "2026-07-26T09:48:08.543410+00:00",
+  "generated_at": "2026-07-26T10:05:32.072336+00:00",
   "items": [
     {
-      "question": "What is the primary function of a Convolutional Neural Network (CNN)?",
-      "answer": "The primary function of a CNN is to analyze and understand visual data, such as images."
+      "question": "What is the primary function of convolutional layers in CNNs?",
+      "answer": "Convolutional layers perform spatial convolutions on input images using kernels to extract features, such as edges, lines, or shapes."
     },
     {
-      "question": "How are activation functions used in CNNs?",
-      "answer": "Activation functions introduce non-linearity into the network, enabling learning of complex relationships."
+      "question": "How does pooling affect the output of a neural network?",
+      "answer": "Pooling reduces the spatial dimensions of feature maps by downsampling, which reduces the number of parameters and computational cost, while maintaining the overall shape of the data."
     },
     {
-      "question": "What is the purpose of pooling layers in CNNs?",
-      "answer": "Pooling layers downsample feature maps to reduce spatial dimensions and computational cost."
+      "question": "Explain the purpose of batch normalization in a CNN.",
+      "answer": "Batch normalization normalizes input data for each layer to improve training stability and speed, by subtracting the mean and dividing by the standard deviation."
     },
     {
-      "question": "Why is normalization important in deep neural networks like CNNs?",
-      "answer": "Normalization improves training stability and speed by normalizing input data for each layer."
+      "question": "Compare and contrast ReLU activation functions with sigmoid and tanh.",
+      "answer": "ReLU is non-linear without negative values, while sigmoid and tanh are bounded between 0 and 1. Sigmoid is often used for binary classification, whereas ReLU and tanh are used for multi-class problems."
     },
     {
-      "question": "Can CNNs be used for sequential data such as videos or text images?",
-      "answer": "Yes, CNNs can be combined with Recurrent Neural Networks (RNNs) to create hybrid architectures for sequential data."
+      "question": "What is the main goal of dropout in deep learning?",
+      "answer": "The primary purpose of dropout is to prevent overfitting by randomly setting a fraction rate of neurons to zero during training, thus reducing the model's capacity to fit noise in the data."
     }
   ]
 }

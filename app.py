@@ -161,9 +161,11 @@ def render_question_preparation_run(subject):
     if scope_mode == "Whole subject":
         st.session_state[scope_key] = ""
         selected_scope = ""
+        run_scope = ""
         st.caption(f"Selected: {subject} and all of its subtopics")
     else:
         selected_scope = st.session_state[scope_key]
+        run_scope = selected_scope
         st.caption(f"Browsing: {subject if not selected_scope else f'{subject} / {selected_scope}'}")
         controls = st.columns(2)
         if controls[0].button("Use subject root", key=f"question_prep_root_{subject}"):
@@ -191,20 +193,25 @@ def render_question_preparation_run(subject):
                 st.caption(f"Showing the first {max_visible_topics} matches. Refine the filter to narrow further.")
             if visible_topics:
                 next_topic = st.selectbox(
-                    "Direct subtopic",
-                    options=visible_topics,
+                    "Direct subtopic to prepare or open",
+                    options=[""] + visible_topics,
+                    format_func=lambda value: "Choose a direct subtopic" if not value else value,
                     key=f"question_prep_child_{subject}_{selected_scope}",
                 )
-                if st.button("Open subtopic", key=f"question_prep_open_{subject}_{selected_scope}"):
-                    st.session_state[scope_key] = (
-                        f"{selected_scope}/{next_topic}" if selected_scope else next_topic
-                    )
+                if next_topic:
+                    run_scope = f"{selected_scope}/{next_topic}" if selected_scope else next_topic
+                if st.button(
+                    "Open selected subtopic",
+                    key=f"question_prep_open_{subject}_{selected_scope}",
+                    disabled=not next_topic,
+                ):
+                    st.session_state[scope_key] = run_scope
                     st.rerun()
             else:
                 st.info("No direct subtopics match that filter.")
-        st.caption(f"Selected run boundary: {subject if not selected_scope else f'{subject} / {selected_scope}'}")
+        st.caption(f"Selected run boundary: {subject if not run_scope else f'{subject} / {run_scope}'}")
 
-    notes_topic_count = len(backend.list_question_bank_topics(subject, selected_scope))
+    notes_topic_count = len(backend.list_question_bank_topics(subject, run_scope))
     st.caption(f"This run will process {notes_topic_count} folder(s) that contain notes.txt.")
 
     run_action = st.radio(
@@ -246,7 +253,7 @@ def render_question_preparation_run(subject):
                     average_duration = sum(generated_durations) / len(generated_durations)
                     estimate = f" Estimated remaining: {format_estimate(average_duration * remaining)}."
                 else:
-                    estimate = " Estimating time after the first generated topic."
+                    estimate = ""
                 progress_bar.progress(
                     int(completed * 100 / total),
                     text=f"Prepared {completed} of {total} topic folders: {topic_label}.{estimate}",
@@ -255,7 +262,7 @@ def render_question_preparation_run(subject):
             with st.spinner("Preparing reusable questions and theory cards. This can take a little while..."):
                 summary = backend.prepare_question_banks(
                     subject,
-                    selected_scope,
+                    run_scope,
                     overwrite=run_action == "Regenerate for all",
                     progress_callback=update_question_preparation_progress,
                 )
