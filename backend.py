@@ -8,6 +8,7 @@ from concurrent.futures import ProcessPoolExecutor, as_completed
 from datetime import datetime, timezone
 from enum import Enum
 from pathlib import Path
+from time import perf_counter
 
 from learning_config import LEARNING_MODE_TYPES, TIMER_PRESETS, get_time_limit
 from llm import LLMClient, OllamaListener
@@ -404,19 +405,27 @@ class LearningBackend:
             raise ValueError(f"Could not save prepared {item_type} items: {error}") from error
 
     def list_question_bank_topics(self, subject, scope=""):
-        """Return the selected notes topic and every descendant that has notes."""
+        """Return only notes folders at or below the selected topic boundary."""
         subject = self._folder_name(subject)
         if scope not in self.get_learning_scopes(subject):
             raise ValueError("Choose a valid subject or subtopic scope.")
         root = (self.course_path / subject).resolve()
         scope_folder = self._topic_folder(subject, scope)
+        requested_relative = Path(scope) if scope else None
         if not scope_folder.is_dir():
             return []
         topics = []
         for notes_path in scope_folder.rglob("notes.txt"):
-            relative = notes_path.parent.relative_to(root)
-            if not any(part.startswith(".") for part in relative.parts):
-                topics.append(str(relative))
+            try:
+                relative = notes_path.parent.relative_to(root)
+            except ValueError:
+                continue
+            if any(part.startswith(".") for part in relative.parts):
+                continue
+            if requested_relative and relative != requested_relative and requested_relative not in relative.parents:
+                continue
+            # Path('.') represents the subject root; use the empty path everywhere else in the backend.
+            topics.append("" if relative == Path(".") else str(relative))
         return sorted(set(topics), key=lambda path: (len(Path(path).parts), path.casefold()))
 
     def _generate_question_bank_outlines(self, subject, relative_topic, notes, item_type):
@@ -662,10 +671,12 @@ class LearningBackend:
         def run_sequentially():
             sequential_results = []
             for topic in topics:
+                started_at = perf_counter()
                 try:
                     sequential_results.append(self.prepare_topic_question_bank(subject, topic, overwrite))
                 except Exception as error:
                     sequential_results.append({"topic": topic, "status": "failed", "message": str(error)})
+                sequential_results[-1]["elapsed_seconds"] = perf_counter() - started_at
                 report_progress(len(sequential_results), sequential_results[-1])
             return sequential_results
 
@@ -1273,5 +1284,8 @@ class LearningBackend:
 
 def _prepare_question_bank_worker(course_path, subject, relative_topic, llm_client, overwrite):
     """Process-pool entry point; keep it module-level so it is pickleable."""
+    started_at = perf_counter()
     worker_backend = LearningBackend(course_path=Path(course_path), llm_client=llm_client)
-    return worker_backend.prepare_topic_question_bank(subject, relative_topic, overwrite)
+    result = worker_backend.prepare_topic_question_bank(subject, relative_topic, overwrite)
+    result["elapsed_seconds"] = perf_counter() - started_at
+    return result

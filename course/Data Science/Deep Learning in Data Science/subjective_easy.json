@@ -1,0 +1,31 @@
+{
+  "version": 1,
+  "type": "subjective",
+  "difficulty": "easy",
+  "subject": "Data Science",
+  "topic": "Deep Learning in Data Science",
+  "notes_hash": "059da4dd160a27ecc9939e323e195264072a3f87120828df3fe7fe2ff299b845",
+  "generated_at": "2026-07-26T09:56:01.139908+00:00",
+  "items": [
+    {
+      "question": "What is the main goal of using artificial neural networks in data science?",
+      "answer": "The main goal is to enable machines to learn from data, making predictions or decisions without explicit programming."
+    },
+    {
+      "question": "Can you explain the difference between supervised and unsupervised learning?",
+      "answer": "Supervised learning involves labeling data for prediction, while unsupervised learning discovers patterns in unlabeled data or groups similar inputs together."
+    },
+    {
+      "question": "What does batch normalization achieve in deep learning?",
+      "answer": "Batch normalization normalizes input data for each layer, enhancing stability and speed during training by minimizing the effect of internal covariate shift."
+    },
+    {
+      "question": "How does activation function introduce non-linearity to an artificial neural network?",
+      "answer": "Activation functions like ReLU or Sigmoid introduce non-linearity, enabling ANNs to learn complex relationships between inputs and outputs."
+    },
+    {
+      "question": "Why do we use convolutional layers in CNNs?",
+      "answer": "Convolutional layers extract features from data through shared weights, allowing CNNs to capture spatial hierarchies and improve image/video analysis performance."
+    }
+  ]
+}

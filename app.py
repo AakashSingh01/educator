@@ -204,6 +204,9 @@ def render_question_preparation_run(subject):
                 st.info("No direct subtopics match that filter.")
         st.caption(f"Selected run boundary: {subject if not selected_scope else f'{subject} / {selected_scope}'}")
 
+    notes_topic_count = len(backend.list_question_bank_topics(subject, selected_scope))
+    st.caption(f"This run will process {notes_topic_count} folder(s) that contain notes.txt.")
+
     run_action = st.radio(
         "Question and theory files",
         options=["Create if missing", "Regenerate for all"],
@@ -222,15 +225,31 @@ def render_question_preparation_run(subject):
     ):
         try:
             progress_bar = st.progress(0, text="Finding notes topics to prepare...")
+            generated_durations = []
+
+            def format_estimate(seconds):
+                seconds = max(1, int(round(seconds)))
+                if seconds < 60:
+                    return f"about {seconds}s"
+                minutes, seconds = divmod(seconds, 60)
+                return f"about {minutes}m {seconds}s" if seconds else f"about {minutes}m"
 
             def update_question_preparation_progress(completed, total, result):
                 if not total:
                     progress_bar.progress(100, text="No notes topics found.")
                     return
                 topic_label = result.get("topic") or subject
+                if result.get("status") == "generated" and result.get("elapsed_seconds") is not None:
+                    generated_durations.append(result["elapsed_seconds"])
+                if generated_durations:
+                    remaining = max(0, total - completed)
+                    average_duration = sum(generated_durations) / len(generated_durations)
+                    estimate = f" Estimated remaining: {format_estimate(average_duration * remaining)}."
+                else:
+                    estimate = " Estimating time after the first generated topic."
                 progress_bar.progress(
                     int(completed * 100 / total),
-                    text=f"Prepared {completed} of {total} topic folders: {topic_label}",
+                    text=f"Prepared {completed} of {total} topic folders: {topic_label}.{estimate}",
                 )
 
             with st.spinner("Preparing reusable questions and theory cards. This can take a little while..."):

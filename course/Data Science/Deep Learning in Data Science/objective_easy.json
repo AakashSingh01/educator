@@ -1,0 +1,71 @@
+{
+  "version": 1,
+  "type": "mcq",
+  "difficulty": "easy",
+  "subject": "Data Science",
+  "topic": "Deep Learning in Data Science",
+  "notes_hash": "059da4dd160a27ecc9939e323e195264072a3f87120828df3fe7fe2ff299b845",
+  "generated_at": "2026-07-26T09:57:56.106789+00:00",
+  "items": [
+    {
+      "question": "What is the primary goal of using artificial neural networks in deep learning?",
+      "options": [
+        "To recognize patterns in data",
+        "To make predictions based on input data",
+        "To classify data into categories",
+        "To extract features from data"
+      ],
+      "correct_option": "To classify data into categories",
+      "explanation": "The primary goal of using artificial neural networks in deep learning is to make predictions based on input data, by learning patterns and relationships from the data.",
+      "reason": "Option C is correct because artificial neural networks are designed to learn from data and make predictions or classify inputs."
+    },
+    {
+      "question": "How do convolutional layers contribute to the analysis of images in deep learning?",
+      "options": [
+        "By applying linear transformations to all pixels",
+        "By applying non-linear transformations to specific regions of the image",
+        "By extracting features from small regions of the image",
+        "By recognizing entire images as a single feature"
+      ],
+      "correct_option": "By extracting features from small regions of the image",
+      "explanation": "Convolutional layers extract features from small regions of the image, such as edges or shapes, which helps in analyzing and understanding the visual content of the image.",
+      "reason": "Option C is correct because convolutional layers are specifically designed to extract local features from images, making them ideal for image analysis tasks."
+    },
+    {
+      "question": "Which activation function introduces non-linearity into an artificial neural network?",
+      "options": [
+        "ReLU (Rectified Linear Unit)",
+        "Sigmoid",
+        "Tanh (Hyperbolic Tangent)",
+        "Softmax"
+      ],
+      "correct_option": "ReLU (Rectified Linear Unit)",
+      "explanation": "ReLU is commonly used as the activation function in deep learning models, introducing non-linearity and enabling the model to learn more complex relationships between inputs.",
+      "reason": "Option A is correct because ReLU is a widely used activation function that introduces non-linearity into artificial neural networks."
+    },
+    {
+      "question": "What is the purpose of batch normalization in deep learning?",
+      "options": [
+        "To normalize input data for each layer",
+        "To speed up training by reducing the size of the model",
+        "To regularize the model's weights",
+        "To introduce non-linearity into the network"
+      ],
+      "correct_option": "To normalize input data for each layer",
+      "explanation": "Batch normalization normalizes the input data for each layer, enhancing stability and speed during training, making it easier for the model to learn.",
+      "reason": "Option A is correct because batch normalization is used to normalize the input data for each layer, which helps in stabilizing the training process and improving the model's performance."
+    },
+    {
+      "question": "Can deep learning models be applied to any type of data?",
+      "options": [
+        "Yes, deep learning models can be applied to any type of data",
+        "No, deep learning models are limited to structured data only",
+        "Maybe, it depends on the specific task and dataset",
+        "Only for image and text data"
+      ],
+      "correct_option": "Yes, deep learning models can be applied to any type of data",
+      "explanation": "Deep learning models can be applied to a wide range of datasets, including images, audio, text, and more, making them versatile and widely applicable.",
+      "reason": "Option A is correct because deep learning models have been successfully applied to various types of data, including but not limited to image, audio, and text data."
+    }
+  ]
+}

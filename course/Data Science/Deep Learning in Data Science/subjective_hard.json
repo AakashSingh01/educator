@@ -1,0 +1,31 @@
+{
+  "version": 1,
+  "type": "subjective",
+  "difficulty": "hard",
+  "subject": "Data Science",
+  "topic": "Deep Learning in Data Science",
+  "notes_hash": "059da4dd160a27ecc9939e323e195264072a3f87120828df3fe7fe2ff299b845",
+  "generated_at": "2026-07-26T09:57:25.274483+00:00",
+  "items": [
+    {
+      "question": "What is the relationship between backpropagation and gradient descent?",
+      "answer": "Backpropagation is a variation of gradient descent used to train artificial neural networks by minimizing error between predicted and actual outputs."
+    },
+    {
+      "question": "How does batch normalization improve the stability of training for neural networks?",
+      "answer": "Batch normalization normalizes input data for each layer, reducing internal covariate shift and enhancing stability during training."
+    },
+    {
+      "question": "What is the difference between CNNs and other types of neural networks?",
+      "answer": "CNNs are designed specifically for image and video analysis, utilizing convolutional and pooling layers to extract features from data, distinguishing them from ANNs or recurrent neural networks (RNNs)."
+    },
+    {
+      "question": "Why are regularization techniques important in deep learning?",
+      "answer": "Regularization techniques, such as L1 and L2 regularization, prevent overfitting by adding a penalty term to the loss function, promoting generalizability and stability during training."
+    },
+    {
+      "question": "Can you explain the concept of vanishing gradients in backpropagation?",
+      "answer": "Vanishing gradients occur when gradients are multiplied across multiple layers, causing them to diminish rapidly, which can lead to unstable training. Techniques like batch normalization and ReLU activation functions help alleviate this issue."
+    }
+  ]
+}

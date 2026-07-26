@@ -1,0 +1,71 @@
+{
+  "version": 1,
+  "type": "mcq",
+  "difficulty": "medium",
+  "subject": "Data Science",
+  "topic": "Deep Learning in Data Science",
+  "notes_hash": "059da4dd160a27ecc9939e323e195264072a3f87120828df3fe7fe2ff299b845",
+  "generated_at": "2026-07-26T09:58:43.781575+00:00",
+  "items": [
+    {
+      "question": "In what ways can supervised learning differ from unsupervised learning in deep learning?",
+      "options": [
+        "Supervised learning focuses on regression tasks whereas unsupervised learning focuses on classification tasks.",
+        "Supervised learning learns patterns in labeled datasets while unsupervised learning discovers patterns in unlabeled data.",
+        "Supervised learning uses pre-trained models and fine-tunes them for new tasks while unsupervised learning starts from scratch.",
+        "Supervised learning is used for both regression and classification while unsupervised learning is primarily used for clustering and dimensionality reduction."
+      ],
+      "correct_option": "Supervised learning uses pre-trained models and fine-tunes them for new tasks while unsupervised learning starts from scratch.",
+      "explanation": "Supervised learning can be used for both regression and classification, whereas unsupervised learning is primarily used for clustering and dimensionality reduction. Additionally, supervised learning uses pre-trained models and fine-tunes them for new tasks, while unsupervised learning starts from scratch.",
+      "reason": "The other options do not accurately describe the differences between supervised and unsupervised learning in deep learning."
+    },
+    {
+      "question": "How does reinforcement learning work for training artificial neural networks?",
+      "options": [
+        "Reinforcement learning involves training an ANN to maximize rewards or penalties received after taking actions in a given environment.",
+        "Reinforcement learning uses supervised learning algorithms to train ANNs on labeled datasets.",
+        "Reinforcement learning works by having the ANN learn from trial and error, but it also relies heavily on the teacher model.",
+        "Reinforcement learning is similar to unsupervised learning as both involve discovering patterns without prior knowledge."
+      ],
+      "correct_option": "Reinforcement learning involves training an ANN to maximize rewards or penalties received after taking actions in a given environment.",
+      "explanation": "Reinforcement learning involves training an ANN to maximize rewards or penalties received after taking actions in a given environment. This process helps the ANN learn from trial and error, but it also relies on the teacher model providing feedback.",
+      "reason": "The other options do not accurately describe how reinforcement learning works for training artificial neural networks."
+    },
+    {
+      "question": "What is the benefit of using transfer learning in deep learning?",
+      "options": [
+        "Transfer learning can be used to speed up the training process by leveraging pre-trained models.",
+        "Transfer learning allows ANNs to adapt quickly to new tasks with minimal data required.",
+        "Transfer learning enables ANNs to learn from large amounts of data and then apply that knowledge to new domains.",
+        "Transfer learning is similar to supervised learning as both involve training on labeled datasets."
+      ],
+      "correct_option": "Transfer learning can be used to speed up the training process by leveraging pre-trained models.",
+      "explanation": "Transfer learning can be used to speed up the training process by leveraging pre-trained models. This approach allows ANNs to adapt quickly to new tasks with minimal data required. Additionally, transfer learning enables ANNs to learn from large amounts of data and then apply that knowledge to new domains.",
+      "reason": "The other options do not accurately describe the benefits of using transfer learning in deep learning."
+    },
+    {
+      "question": "Which type of neural network is particularly well-suited for video analysis?",
+      "options": [
+        "Convolutional Neural Networks (CNNs) are suitable for image analysis, but they can also be used for video analysis with some modifications.",
+        "Convolutional Neural Networks (CNNs) and Recurrent Neural Networks (RNNs) are both suitable for video analysis.",
+        "Recurrent Neural Networks (RNNs) are particularly well-suited for sequential data such as video frames.",
+        "Convolutional Neural Networks (CNNs) and Recurrent Neural Networks (RNNs) are the most commonly used types of neural networks for video analysis."
+      ],
+      "correct_option": "Recurrent Neural Networks (RNNs) are particularly well-suited for sequential data such as video frames.",
+      "explanation": "Recurrent Neural Networks (RNNs) are particularly well-suited for sequential data such as video frames. They can capture temporal relationships between frames, making them ideal for tasks like object detection and tracking in videos.",
+      "reason": "The other options do not accurately describe the neural network type most suitable for video analysis."
+    },
+    {
+      "question": "Can a pre-trained model be used to solve a problem that requires significant domain knowledge?",
+      "options": [
+        "Yes, but it would require extensive fine-tuning of the pre-trained model.",
+        "No, because pre-trained models lack domain-specific knowledge.",
+        "Maybe, as it depends on the specific task and dataset at hand.",
+        "Yes, pre-trained models can often learn generalizable features that can be applied to various tasks with minimal adjustments."
+      ],
+      "correct_option": "Yes, pre-trained models can often learn generalizable features that can be applied to various tasks with minimal adjustments.",
+      "explanation": "Yes, pre-trained models can often learn generalizable features that can be applied to various tasks with minimal adjustments. However, it would still require extensive fine-tuning of the pre-trained model to adapt to the specific task and domain knowledge required.",
+      "reason": "The other options do not accurately describe whether a pre-trained model can be used to solve problems requiring significant domain knowledge."
+    }
+  ]
+}
