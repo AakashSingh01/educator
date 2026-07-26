@@ -14,6 +14,7 @@ from llm import LLMClient, OllamaListener
 from question_bank_config import (
     ITEMS_PER_DIFFICULTY,
     PREPARATION_OUTPUT_ATTEMPTS,
+    PREPARATION_WORKERS,
     QUESTION_BANK_DIFFICULTIES,
     QUESTION_BANK_FILES,
     QUESTION_BANK_VERSION,
@@ -570,18 +571,23 @@ class LearningBackend:
             return {"topic": relative_topic, "status": "skipped", "message": "No notes.txt content"}
 
         notes_hash = self._notes_hash(notes)
-        all_current = all(
-            self._read_question_bank(folder, item_type, difficulty, notes_hash) is not None
+        files_to_write = {
+            item_type: [
+                difficulty for difficulty in QUESTION_BANK_DIFFICULTIES
+                if overwrite or self._read_question_bank(folder, item_type, difficulty, notes_hash) is None
+            ]
             for item_type in QUESTION_BANK_FILES
-            for difficulty in QUESTION_BANK_DIFFICULTIES
-        )
-        if all_current and not overwrite:
+        }
+        if not any(files_to_write.values()):
             return {"topic": relative_topic, "status": "cached", "files": 0}
 
         generated_files = 0
         for item_type in ("subjective", "mcq", "theory"):
+            missing_difficulties = files_to_write[item_type]
+            if not missing_difficulties:
+                continue
             outlines = self._generate_question_bank_outlines(subject, relative_topic, notes, item_type)
-            for difficulty in QUESTION_BANK_DIFFICULTIES:
+            for difficulty in missing_difficulties:
                 if item_type == "subjective":
                     items = self._generate_subjective_answers(
                         subject, relative_topic, notes, difficulty, outlines[difficulty]
@@ -600,7 +606,7 @@ class LearningBackend:
                 generated_files += 1
         return {"topic": relative_topic, "status": "generated", "files": generated_files}
 
-    def prepare_question_banks(self, subject, scope="", max_workers=1, overwrite=False):
+    def prepare_question_banks(self, subject, scope="", max_workers=PREPARATION_WORKERS, overwrite=False):
         """Prepare reusable items for all saved notes in a topic subtree.
 
         The model client is passed to worker processes only when it can be safely

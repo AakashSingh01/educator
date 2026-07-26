@@ -20,7 +20,6 @@ QUESTION_BANK_FILES = {
     },
 }
 
-# A local model is usually more reliable with a small number of concurrent requests.
-DEFAULT_PREPARATION_WORKERS = 2
-MAX_PREPARATION_WORKERS = 3
+# Used automatically for independent topic folders; this is intentionally not a UI setting.
+PREPARATION_WORKERS = 4
 PREPARATION_OUTPUT_ATTEMPTS = 2
