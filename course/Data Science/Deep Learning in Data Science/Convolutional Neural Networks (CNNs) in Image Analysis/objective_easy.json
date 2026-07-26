@@ -5,67 +5,67 @@
   "subject": "Data Science",
   "topic": "Deep Learning in Data Science/Convolutional Neural Networks (CNNs) in Image Analysis",
   "notes_hash": "548180e166a511777d662f29857c35954c52ccac078a04cf56874928c41e90bf",
-  "generated_at": "2026-07-26T10:07:05.393499+00:00",
+  "generated_at": "2026-07-26T10:16:34.617176+00:00",
   "items": [
     {
-      "question": "What is the primary function of convolutional layers in a CNN?",
+      "question": "What is the primary function of a convolutional layer in a CNN?",
       "options": [
-        "Extract features from images",
-        "Find objects in images",
-        "Classify images",
-        "Localize objects in images"
+        "To perform spatial convolutions on input images using kernels",
+        "To classify output into predefined classes with fully connected layers",
+        "To normalize input data for each layer with batch normalization",
+        "To randomly set a fraction rate of neurons to zero during training with dropout"
       ],
-      "correct_option": "Extract features from images",
-      "explanation": "Convolutional layers are designed to extract features from input images, such as edges, lines, and shapes.",
-      "reason": "This is the primary function of convolutional layers, which enables the network to learn complex representations of visual data."
+      "correct_option": "To perform spatial convolutions on input images using kernels",
+      "explanation": "Convolutional layers in CNNs are designed to extract features from spatial data like images through convolution operations with small filters (kernels). This process allows the network to capture local patterns and hierarchies in the image.",
+      "reason": "The other options do not accurately describe the primary function of a convolutional layer."
     },
     {
-      "question": "How does pooling layer reduce the number of parameters in a network?",
+      "question": "What are the benefits of using pooling layers in a CNN?",
       "options": [
-        "By increasing spatial dimensions",
-        "By reducing spatial dimensions",
-        "Increases computational cost",
-        "Decreases model capacity"
+        "To increase the number of parameters and computational cost",
+        "To reduce the spatial dimensions of feature maps through max or avg pooling",
+        "To introduce non-linearity into the network with ReLU activation",
+        "To classify output into predefined classes with fully connected layers"
       ],
-      "correct_option": "By reducing spatial dimensions",
-      "explanation": "Pooling layers downsample feature maps by reducing spatial dimensions, which reduces the number of parameters and computational cost in the network.",
-      "reason": "Pooling helps to decrease the spatial dimensions of the feature maps, resulting in fewer parameters for the network to learn."
+      "correct_option": "To reduce the spatial dimensions of feature maps through max or avg pooling",
+      "explanation": "Pooling layers in CNNs help reduce the spatial dimensions of feature maps, thereby decreasing the number of parameters and computational cost. This also helps the network to capture larger-scale features and reduces the risk of overfitting.",
+      "reason": "The other options do not accurately describe the benefits of using pooling layers."
     },
     {
-      "question": "What is the purpose of fully connected layers after convolutional and pooling layers?",
+      "question": "Which activation function is commonly used for binary classification tasks?",
       "options": [
-        "To extract features from images",
-        "To classify objects",
-        "To localize objects in images",
-        "To perform object detection tasks"
+        "ReLU (Rectified Linear Unit)",
+        "Sigmoid",
+        "Tanh",
+        "Max Activation"
       ],
-      "correct_option": "To localize objects in images",
-      "explanation": "Fully connected layers are used as the final classification layer, where they map the output of the convolutional and pooling layers to a probability distribution over all possible classes.",
-      "reason": "The purpose of fully connected layers is to classify the output of the network into predefined classes."
+      "correct_option": "Sigmoid",
+      "explanation": "Sigmoid is a common choice for binary classification tasks because it produces outputs between 0 and 1, which are suitable for probability estimates. However, other activation functions like ReLU can also be used depending on the specific task requirements.",
+      "reason": "The other options do not accurately describe the commonly used activation function for binary classification."
     },
     {
-      "question": "In which type of neural network are recurrent connections typically found?",
+      "question": "What is the purpose of batch normalization in a neural network?",
       "options": [
-        "Recurrent Neural Networks (RNNs)",
-        "Convolutional Neural Networks (CNNs)",
-        "Long Short-Term Memory (LSTM) networks",
-        "Feedforward Neural Networks (FNNs)"
+        "To normalize input data for each layer to improve training stability and speed",
+        "To classify output into predefined classes with fully connected layers",
+        "To introduce non-linearity into the network with ReLU activation",
+        "To randomly set a fraction rate of neurons to zero during training with dropout"
       ],
-      "correct_option": "Recurrent Neural Networks (RNNs)",
-      "explanation": "Recurrent connections, such as those found in RNNs and LSTM networks, are used to model sequential data and capture temporal dependencies.",
-      "reason": "RNNs and their variants are designed to handle sequential data, making them well-suited for tasks like natural language processing and speech recognition."
+      "correct_option": "To normalize input data for each layer to improve training stability and speed",
+      "explanation": "Batch normalization normalizes the input data for each layer by subtracting the mean and dividing by the standard deviation, which improves training stability and speed. This helps the network to learn more efficiently and generalize better.",
+      "reason": "The other options do not accurately describe the purpose of batch normalization."
     },
     {
-      "question": "What is the main difference between max pooling and average pooling?",
+      "question": "Why is dropout used in training deep neural networks?",
       "options": [
-        "Max pooling reduces spatial dimensions by taking the maximum value at each position",
-        "Average pooling reduces spatial dimensions by taking the mean value at each position",
-        "Max pooling increases computational cost",
-        "Average pooling decreases model capacity"
+        "To prevent overfitting by randomly setting a fraction rate of neurons to zero during training",
+        "To increase the number of parameters and computational cost",
+        "To improve training stability and speed",
+        "To classify output into predefined classes with fully connected layers"
       ],
-      "correct_option": "Max pooling reduces spatial dimensions by taking the maximum value at each position",
-      "explanation": "The key difference between max pooling and average pooling is that max pooling preserves non-linear relationships, while average pooling smooths them out.",
-      "reason": "Max pooling takes the maximum value at each position, which helps preserve non-linear features in the data, whereas average pooling calculates the mean value, reducing the impact of these features."
+      "correct_option": "To prevent overfitting by randomly setting a fraction rate of neurons to zero during training",
+      "explanation": "Dropout is used in training deep neural networks to prevent overfitting. By randomly setting a fraction rate of neurons to zero during training, the network learns to rely on multiple input paths, making it more robust and generalizable.",
+      "reason": "The other options do not accurately describe the reason for using dropout."
     }
   ]
 }

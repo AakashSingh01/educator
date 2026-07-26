@@ -5,67 +5,67 @@
   "subject": "Data Science",
   "topic": "Deep Learning in Data Science",
   "notes_hash": "059da4dd160a27ecc9939e323e195264072a3f87120828df3fe7fe2ff299b845",
-  "generated_at": "2026-07-26T10:06:52.211755+00:00",
+  "generated_at": "2026-07-26T10:16:18.692861+00:00",
   "items": [
     {
-      "question": "What is the primary inspiration for Artificial Neural Networks (ANNs)?",
+      "question": "What type of machine learning does deep learning specialize in?",
       "options": [
-        "Human brains",
-        "Computers",
-        "Robotics",
-        "Mathematics"
+        "Supervised Learning",
+        "Reinforcement Learning",
+        "Unsupervised Learning",
+        "Machine Learning"
       ],
-      "correct_option": "Human brains",
-      "explanation": "ANNs are modeled after the human brain's structure and function, with interconnected nodes (neurons) that process inputs and produce outputs.",
-      "reason": "The other options do not accurately describe the primary inspiration for ANNs."
+      "correct_option": "Supervised Learning",
+      "explanation": "Deep learning is a subset of machine learning that specializes in the training of artificial neural networks to learn from data. It can be used for supervised, reinforcement, or unsupervised learning, but not solely for machine learning.",
+      "reason": "The other options are related to deep learning, but not the best answer."
     },
     {
-      "question": "Deep learning models are trained using which optimization algorithm?",
+      "question": "Deep learning is often used for which type of analysis?",
       "options": [
-        "Backpropagation",
+        "Image Analysis",
+        "Natural Language Processing",
+        "Time Series Analysis",
+        "Text Analysis"
+      ],
+      "correct_option": "Image Analysis",
+      "explanation": "CNNs are particularly useful for image and video analysis. While deep learning can be applied to other types of data, CNNs are a key component of this type of analysis.",
+      "reason": "The other options are related to deep learning applications, but not the primary focus."
+    },
+    {
+      "question": "A key component of deep learning models are",
+      "options": [
+        "Linear Regression",
+        "Decision Trees",
+        "Convolutional Layers",
+        "Neural Networks"
+      ],
+      "correct_option": "Neural Networks",
+      "explanation": "Deep learning models often utilize convolutional layers, which are a type of neural network designed for image and video analysis.",
+      "reason": "The other options are not typically used as key components in deep learning models."
+    },
+    {
+      "question": "Which optimization algorithm is commonly used for training artificial neural networks?",
+      "options": [
         "Gradient Descent",
-        "Quicksort",
-        "Steepest Ascent"
+        "Stochastic Gradient Descent",
+        "Batch Normalization",
+        "Adam"
       ],
-      "correct_option": "Backpropagation",
-      "explanation": "Backpropagation is a key component of training deep learning models, used to minimize the error between predicted and actual outputs.",
-      "reason": "While Gradient Descent is related, Backpropagation is specifically tailored for neural networks."
+      "correct_option": "Stochastic Gradient Descent",
+      "explanation": "Stochastic gradient descent is often used for training artificial neural networks, but another common option is Adam. Batch normalization and gradient descent are also related to deep learning, but not the best answer.",
+      "reason": "The other options are all relevant to optimization in deep learning, but not as commonly used as stochastic gradient descent."
     },
     {
-      "question": "Convolutional Neural Networks (CNNs) are designed specifically for analyzing which type of data?",
+      "question": "In deep learning, what do activation functions introduce?",
       "options": [
-        "Images",
-        "Videos",
-        "Text",
-        "Audio"
+        "Stability",
+        "Scalability",
+        "Non-linearity",
+        "Interpretability"
       ],
-      "correct_option": "Images",
-      "explanation": "CNNs excel at processing and extracting features from image and video data, leveraging convolutional and pooling layers.",
-      "reason": "While CNNs can be applied to other data types, their primary focus is on visual data."
-    },
-    {
-      "question": "What is the main purpose of Batch Normalization in ANNs?",
-      "options": [
-        "To introduce non-linearity into ANN inputs",
-        "To normalize input data for each layer",
-        "To optimize model weights",
-        "To regularize model training"
-      ],
-      "correct_option": "To normalize input data for each layer",
-      "explanation": "Batch Normalization normalizes input data for each layer, enhancing stability and speed during training, making it easier to train deeper networks.",
-      "reason": "The other options do not accurately describe the main purpose of Batch Normalization."
-    },
-    {
-      "question": "The ReLU activation function introduces what kind of non-linearity into ANN inputs?",
-      "options": [
-        "Sigmoidal curve",
-        "Circadian rhythm",
-        "Linear slope",
-        "Rectified Linear Unit"
-      ],
-      "correct_option": "Rectified Linear Unit",
-      "explanation": "ReLU is a popular choice for its simplicity and efficiency, introducing a rectified linear unit that helps prevent dying neurons during training.",
-      "reason": "The other options do not accurately describe the type of non-linearity introduced by ReLU."
+      "correct_option": "Non-linearity",
+      "explanation": "Activation functions introduce non-linearity into the input of an ANN. This allows the model to learn more complex relationships in the data.",
+      "reason": "The other options are related to deep learning, but not what activation functions accomplish."
     }
   ]
 }

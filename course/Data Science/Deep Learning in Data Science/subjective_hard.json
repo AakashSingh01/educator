@@ -5,27 +5,27 @@
   "subject": "Data Science",
   "topic": "Deep Learning in Data Science",
   "notes_hash": "059da4dd160a27ecc9939e323e195264072a3f87120828df3fe7fe2ff299b845",
-  "generated_at": "2026-07-26T10:06:05.392810+00:00",
+  "generated_at": "2026-07-26T10:15:33.278792+00:00",
   "items": [
     {
-      "question": "What is the primary function of an Activation Function in an ANN?",
-      "answer": "An activation function introduces non-linearity to ANN inputs, enabling the network to learn complex relationships."
+      "question": "How does Convolutional Neural Networks (CNNs) differ from Feedforward Neural Networks?",
+      "answer": "CNNs use convolutional and pooling layers to extract features from data, whereas feedforward networks rely on fully connected layers."
     },
     {
-      "question": "How does Batch Normalization stabilize ANN training?",
-      "answer": "Batch normalization normalizes input data for each layer, reducing internal covariate shift and enhancing stability during training."
+      "question": "Can Unsupervised Learning be performed on datasets with missing labels?",
+      "answer": "Yes, unsupervised learning can be performed on such datasets as it focuses on discovering patterns or grouping similar inputs together."
     },
     {
-      "question": "What are some common applications of Deep Learning models?",
-      "answer": "Common applications include image recognition, natural language processing, speech recognition, and predictive modeling."
+      "question": "In what ways can Deep Learning be used for multi-modal data analysis?",
+      "answer": "Deep learning can be used for multi-modal data analysis through techniques like fusion of different modalities, such as text, images, and audio, into a single representation."
     },
     {
-      "question": "Why do we use CNNs for image recognition tasks?",
-      "answer": "Convolutional neural networks excel at image recognition due to their ability to extract features from spatial hierarchies using convolutional and pooling layers."
+      "question": "What are some limitations of Batch Normalization in certain scenarios?",
+      "answer": "Batch normalization can be limited in scenarios where the input data has non-normal distributions or when the model requires more flexibility in its activations."
     },
     {
-      "question": "What is the difference between Self-Attention and Attention mechanisms in NLP?",
-      "answer": "Self-attention focuses on relationships within a sequence, while attention mechanisms in NLP focus on relevance between input elements and contextualized representations."
+      "question": "How do Recurrent Neural Networks (RNNs) handle sequential data?",
+      "answer": "RNNs handle sequential data by using recurrent connections and weights that capture dependencies between consecutive time steps, enabling them to learn patterns in temporal sequences."
     }
   ]
 }

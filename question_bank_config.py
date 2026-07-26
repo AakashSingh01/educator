@@ -2,7 +2,8 @@
 
 # Every topic receives three difficulty files for each item type: nine files in total.
 QUESTION_BANK_DIFFICULTIES = ("easy", "medium", "hard")
-ITEMS_PER_DIFFICULTY = 5
+# Try 15 items first (5 per difficulty). Small topics fall back to 12, 9, then 6.
+QUESTION_BANK_ITEMS_PER_DIFFICULTY = (5, 4, 3, 2)
 QUESTION_BANK_VERSION = 1
 
 QUESTION_BANK_FILES = {

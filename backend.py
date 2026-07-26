@@ -13,11 +13,11 @@ from time import perf_counter
 from learning_config import LEARNING_MODE_TYPES, TIMER_PRESETS, get_time_limit
 from llm import LLMClient, OllamaListener
 from question_bank_config import (
-    ITEMS_PER_DIFFICULTY,
     PREPARATION_OUTPUT_ATTEMPTS,
     PREPARATION_WORKERS,
     QUESTION_BANK_DIFFICULTIES,
     QUESTION_BANK_FILES,
+    QUESTION_BANK_ITEMS_PER_DIFFICULTY,
     QUESTION_BANK_VERSION,
 )
 
@@ -385,7 +385,9 @@ class LearningBackend:
             return None
         return data
 
-    def _write_question_bank(self, folder, item_type, difficulty, subject, relative_topic, notes_hash, items):
+    def _write_question_bank(
+        self, folder, item_type, difficulty, subject, relative_topic, notes_hash, items, items_per_difficulty
+    ):
         data = {
             "version": QUESTION_BANK_VERSION,
             "type": item_type,
@@ -393,6 +395,7 @@ class LearningBackend:
             "subject": subject,
             "topic": relative_topic,
             "notes_hash": notes_hash,
+            "items_per_difficulty": items_per_difficulty,
             "generated_at": datetime.now(timezone.utc).isoformat(),
             "items": items,
         }
@@ -428,23 +431,29 @@ class LearningBackend:
             topics.append("" if relative == Path(".") else str(relative))
         return sorted(set(topics), key=lambda path: (len(Path(path).parts), path.casefold()))
 
-    def _generate_question_bank_outlines(self, subject, relative_topic, notes, item_type):
+    def _generate_question_bank_outlines(
+        self, subject, relative_topic, notes, item_type, items_per_difficulty
+    ):
         topic_label = subject if not relative_topic else f"{subject} / {relative_topic}"
         descriptions = {
             "subjective": "short subjective questions that require a concise written answer",
             "mcq": "multiple-choice question stems, without options or answers",
             "theory": "theory-card headings that invite a concise explanatory card",
         }
+        total_items = items_per_difficulty * len(QUESTION_BANK_DIFFICULTIES)
+        outline_schema = json.dumps({
+            difficulty: [f"item {number}" for number in range(1, items_per_difficulty + 1)]
+            for difficulty in QUESTION_BANK_DIFFICULTIES
+        })
 
         def create():
             prompt = (
                 f"Subject: {subject}\nTopic: {topic_label}\nPrepared notes:\n{notes[:12000]}\n\n"
-                f"Create exactly 15 distinct {descriptions[item_type]} that can be answered from these notes. "
-                "Use five Easy, five Medium, and five Hard items. Difficulty must reflect the reasoning needed, "
+                f"Create exactly {total_items} distinct {descriptions[item_type]} that can be answered from these notes. "
+                f"Use exactly {items_per_difficulty} Easy, {items_per_difficulty} Medium, and "
+                f"{items_per_difficulty} Hard items. Difficulty must reflect the reasoning needed, "
                 "not obscure facts. Do not repeat the same concept with superficial wording changes. "
-                'Return exactly JSON: {"easy":["item 1","item 2","item 3","item 4","item 5"],'
-                '"medium":["item 1","item 2","item 3","item 4","item 5"],'
-                '"hard":["item 1","item 2","item 3","item 4","item 5"]}. '
+                f"Return exactly JSON: {outline_schema}. "
                 "Return the item text only; do not include answers, options, or explanations yet."
             )
             response = self.llm.chat(
@@ -456,7 +465,7 @@ class LearningBackend:
             seen = set()
             for difficulty in QUESTION_BANK_DIFFICULTIES:
                 entries = data.get(difficulty) or data.get(difficulty.title())
-                if not isinstance(entries, list) or len(entries) != ITEMS_PER_DIFFICULTY:
+                if not isinstance(entries, list) or len(entries) != items_per_difficulty:
                     raise ValueError("The model did not return all requested outlines.")
                 values = []
                 for entry in entries:
@@ -468,14 +477,14 @@ class LearningBackend:
                 cleaned[difficulty] = values
             return cleaned
 
-        return self._retry_preparation_output(create, "The model could not prepare distinct item outlines. Please run it again.")
+        return self._retry_preparation_output(create, "The model could not prepare distinct item outlines.")
 
     def _generate_subjective_answers(self, subject, relative_topic, notes, difficulty, questions):
         def create():
             prompt = (
                 f"Subject: {subject}\nTopic: {subject if not relative_topic else f'{subject} / {relative_topic}'}\n"
                 f"Prepared notes:\n{notes[:12000]}\n\nDifficulty: {difficulty.title()}\n"
-                f"Answer these five questions with short, accurate model answers:\n{json.dumps(questions, ensure_ascii=False)}\n\n"
+                f"Answer these {len(questions)} questions with short, accurate model answers:\n{json.dumps(questions, ensure_ascii=False)}\n\n"
                 'Return exactly JSON: {"items":[{"question":"exact question text","answer":"short model answer"}]}. '
                 "Include each supplied question exactly once and do not add questions."
             )
@@ -492,7 +501,7 @@ class LearningBackend:
             prompt = (
                 f"Subject: {subject}\nTopic: {subject if not relative_topic else f'{subject} / {relative_topic}'}\n"
                 f"Prepared notes:\n{notes[:12000]}\n\nDifficulty: {difficulty.title()}\n"
-                f"Create four options and a complete answer for these five exact question stems:\n{json.dumps(questions, ensure_ascii=False)}\n\n"
+                f"Create four options and a complete answer for these {len(questions)} exact question stems:\n{json.dumps(questions, ensure_ascii=False)}\n\n"
                 'Return exactly JSON: {"items":[{"question":"exact question text","options":["A","B","C","D"],'
                 '"correct_option":"one exact option","explanation":"why it is correct","reason":"why the other options do not fit"}]}. '
                 "Include each supplied question exactly once. Every option must be plausible, distinct, and only one may be correct."
@@ -531,7 +540,7 @@ class LearningBackend:
             prompt = (
                 f"Subject: {subject}\nTopic: {subject if not relative_topic else f'{subject} / {relative_topic}'}\n"
                 f"Prepared notes:\n{notes[:12000]}\n\nDifficulty: {difficulty.title()}\n"
-                f"Write concise but useful theory cards for these five exact headings:\n{json.dumps(titles, ensure_ascii=False)}\n\n"
+                f"Write concise but useful theory cards for these {len(titles)} exact headings:\n{json.dumps(titles, ensure_ascii=False)}\n\n"
                 'Return exactly JSON: {"items":[{"title":"exact heading","content":"clear explanation"}]}. '
                 "Include every supplied heading exactly once. Keep the cards self-contained and grounded in the notes."
             )
@@ -595,22 +604,48 @@ class LearningBackend:
             missing_difficulties = files_to_write[item_type]
             if not missing_difficulties:
                 continue
-            outlines = self._generate_question_bank_outlines(subject, relative_topic, notes, item_type)
-            for difficulty in missing_difficulties:
-                if item_type == "subjective":
-                    items = self._generate_subjective_answers(
-                        subject, relative_topic, notes, difficulty, outlines[difficulty]
+            completed_items = None
+            completed_item_count = None
+            last_error = None
+            for items_per_difficulty in QUESTION_BANK_ITEMS_PER_DIFFICULTY:
+                try:
+                    outlines = self._generate_question_bank_outlines(
+                        subject, relative_topic, notes, item_type, items_per_difficulty
                     )
-                elif item_type == "mcq":
-                    items = self._generate_objective_answers(
-                        subject, relative_topic, notes, difficulty, outlines[difficulty]
-                    )
-                else:
-                    items = self._generate_theory_cards(
-                        subject, relative_topic, notes, difficulty, outlines[difficulty]
-                    )
+                    prepared_items = {}
+                    for difficulty in missing_difficulties:
+                        if item_type == "subjective":
+                            prepared_items[difficulty] = self._generate_subjective_answers(
+                                subject, relative_topic, notes, difficulty, outlines[difficulty]
+                            )
+                        elif item_type == "mcq":
+                            prepared_items[difficulty] = self._generate_objective_answers(
+                                subject, relative_topic, notes, difficulty, outlines[difficulty]
+                            )
+                        else:
+                            prepared_items[difficulty] = self._generate_theory_cards(
+                                subject, relative_topic, notes, difficulty, outlines[difficulty]
+                            )
+                    completed_items = prepared_items
+                    completed_item_count = items_per_difficulty
+                    break
+                except ValueError as error:
+                    last_error = error
+            if completed_items is None:
+                raise ValueError(
+                    f"The model could not create enough distinct {item_type} items for this topic, even at six items."
+                ) from last_error
+
+            for difficulty, items in completed_items.items():
                 self._write_question_bank(
-                    folder, item_type, difficulty, subject, relative_topic, notes_hash, items
+                    folder,
+                    item_type,
+                    difficulty,
+                    subject,
+                    relative_topic,
+                    notes_hash,
+                    items,
+                    completed_item_count,
                 )
                 generated_files += 1
         return {"topic": relative_topic, "status": "generated", "files": generated_files}

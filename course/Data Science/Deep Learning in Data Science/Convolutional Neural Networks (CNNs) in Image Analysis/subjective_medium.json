@@ -5,27 +5,27 @@
   "subject": "Data Science",
   "topic": "Deep Learning in Data Science/Convolutional Neural Networks (CNNs) in Image Analysis",
   "notes_hash": "548180e166a511777d662f29857c35954c52ccac078a04cf56874928c41e90bf",
-  "generated_at": "2026-07-26T10:05:53.622373+00:00",
+  "generated_at": "2026-07-26T10:15:12.796815+00:00",
   "items": [
     {
-      "question": "Describe how fully connected layers are used in conjunction with convolutional layers.",
-      "answer": "Fully connected layers are used to classify the output of convolutional layers into predefined classes, typically at the end of a CNN architecture. They take the feature maps from convolutional and pooling layers as input and produce an output probability distribution over all possible classes."
+      "question": "How does fully connected layer contribute to image classification?",
+      "answer": "A fully connected layer contributes to image classification by taking the output of the convolutional and pooling layers and flattening it into a one-dimensional array. This array is then fed into the fully connected layer, which uses weights and biases to learn the relationship between the input features and the desired output classes."
     },
     {
-      "question": "How does the use of pooling layers impact the number of parameters in a neural network?",
-      "answer": "Pooling layers reduce the spatial dimensions of the feature maps, which decreases the number of parameters in the subsequent convolutional layers. This reduces computational cost and memory requirements, as there are fewer weights to be learned."
+      "question": "What is the difference between max pooling and average pooling?",
+      "answer": "Max pooling reduces the spatial dimensions of the feature maps by taking the maximum value across each window, whereas average pooling takes the mean value. Max pooling preserves more details but can lead to overfitting, while average pooling reduces noise but may lose important features."
     },
     {
-      "question": "Explain the concept of kernel size in convolutional layers.",
-      "answer": "Kernel size, also known as filter size, refers to the number of pixels in a small square window that slides over the input image during convolution. A larger kernel size captures more spatial information but may increase computational cost and risk of overfitting."
+      "question": "Can CNNs be used for tasks other than image analysis?",
+      "answer": "Yes, CNNs can be used for tasks other than image analysis, such as video analysis, speech recognition, and natural language processing. They have been successfully applied to these areas by modifying the architecture or using transfer learning."
     },
     {
-      "question": "Discuss the differences between max pooling and average pooling.",
-      "answer": "Max pooling reduces feature maps by taking the maximum value across each region, whereas average pooling takes the mean. Max pooling is often preferred for preserving high-frequency features, while average pooling is used for downsampling and reducing dimensionality without losing significant information."
+      "question": "Explain the concept of convolutional autoencoders (CAE) in relation to CNNs.",
+      "answer": "Convolutional Autoencoders (CAE) are a type of neural network that uses CNNs to learn a compressed representation of an input image. The compressed representation is then used as input to a decoder, which tries to reconstruct the original image. CAEs can be used for dimensionality reduction and generative modeling."
     },
     {
-      "question": "What is the role of activation functions in enabling learning of complex relationships?",
-      "answer": "Activation functions introduce non-linearity into the network, allowing it to learn complex relationships between inputs and outputs. Commonly used activation functions include ReLU, Sigmoid, and Tanh, each with its own strengths and weaknesses."
+      "question": "What are some common applications of U-Net architecture?",
+      "answer": "The U-Net architecture is commonly used for biomedical image segmentation tasks such as tumor segmentation, organ segmentation, and image-guided surgery. It has also been applied to other domains like object segmentation and image-to-image translation."
     }
   ]
 }

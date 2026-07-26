@@ -5,67 +5,67 @@
   "subject": "Data Science",
   "topic": "Deep Learning in Data Science/Convolutional Neural Networks (CNNs) in Image Analysis",
   "notes_hash": "548180e166a511777d662f29857c35954c52ccac078a04cf56874928c41e90bf",
-  "generated_at": "2026-07-26T10:08:53.210005+00:00",
+  "generated_at": "2026-07-26T10:17:09.856320+00:00",
   "items": [
     {
-      "question": "Which activation function is commonly used in CNNs to introduce non-linearity?",
+      "question": "How does the number of parameters in a neural network affect its performance?",
       "options": [
-        "ReLU (Rectified Linear Unit)",
-        "Sigmoid",
-        "Tanh",
-        "Softmax"
+        "The more parameters, the better performance.",
+        "The fewer parameters, the worse performance.",
+        "Both equally matter.",
+        "It depends on the task and dataset."
       ],
-      "correct_option": "ReLU (Rectified Linear Unit)",
-      "explanation": "ReLU introduces non-linearity and allows the model to learn complex features.",
-      "reason": "Other options are also used in different contexts, but ReLU is widely adopted for CNNs."
+      "correct_option": "The fewer parameters, the worse performance.",
+      "explanation": "While having more parameters can sometimes lead to better performance due to increased capacity, it also leads to overfitting if not regularized properly. The optimal number of parameters varies depending on the specific problem, dataset, and learning rate.",
+      "reason": "The other options are either oversimplified or incorrect."
     },
     {
-      "question": "How does batch normalization improve training stability?",
+      "question": "What is the difference between max pooling and average pooling?",
       "options": [
-        "By reducing the impact of internal covariate shift",
-        "By increasing the capacity of the network",
-        "By speeding up computation",
-        "By decreasing the dimensionality"
+        "Max pooling reduces the spatial dimensions by taking the maximum value across a filter.",
+        "Average pooling reduces the spatial dimensions by taking the mean of values across a filter.",
+        "Both reduce spatial dimensions but via different methods.",
+        "Neither reduces spatial dimensions."
       ],
-      "correct_option": "By reducing the impact of internal covariate shift",
-      "explanation": "Batch normalization normalizes the input data, which reduces the internal covariate shift and improves training stability.",
-      "reason": "Internal covariate shift can lead to non-convex optimization problems, but batch normalization mitigates this issue."
+      "correct_option": "Max pooling reduces the spatial dimensions by taking the maximum value across a filter.",
+      "explanation": "Max pooling takes the maximum value in each window to downsample the feature map, preserving some information about the local structure. Average pooling, on the other hand, calculates the mean of values within each window, losing less information compared to max pooling but also reducing the capacity to capture strong gradients.",
+      "reason": "The other options are incorrect or misleading."
     },
     {
-      "question": "What is the purpose of dropout in a deep neural network?",
+      "question": "How do convolutional layers extract features from an image?",
       "options": [
-        "To prevent overfitting",
-        "To speed up computation",
-        "To increase model capacity",
-        "To reduce dimensionality"
+        "By performing matrix multiplication between a filter and all pixels in an image.",
+        "By taking the derivative of the output with respect to each pixel.",
+        "Both by doing so.",
+        "Neither through matrix multiplication nor differentiation."
       ],
-      "correct_option": "To prevent overfitting",
-      "explanation": "Dropout randomly sets a fraction rate of neurons to zero during training, which prevents the network from relying too heavily on individual neurons and reduces overfitting.",
-      "reason": "Other options are related to other benefits of dropout, but preventing overfitting is its primary purpose."
+      "correct_option": "By performing matrix multiplication between a filter and all pixels in an image.",
+      "explanation": "Convolutional layers apply filters (small kernels) that slide over the entire image, performing element-wise multiplications at each position. This process extracts local features from the image and reduces spatial dimensions.",
+      "reason": "The other options are incorrect or oversimplify the process."
     },
     {
-      "question": "In what type of images are U-Net architectures typically applied?",
+      "question": "What is the role of fully connected layers in a CNN?",
       "options": [
-        "High-resolution images",
-        "Low-resolution images",
-        "Biomedical images",
-        "General-purpose images"
+        "Fully connected layers classify input data into predefined classes.",
+        "Fully connected layers enhance the output of convolutional layers to prepare it for classification.",
+        "Both of the above tasks are accomplished by these layers.",
+        "Neither classifications nor enhancements happen here."
       ],
-      "correct_option": "Biomedical images",
-      "explanation": "U-Net architectures are particularly well-suited for biomedical image segmentation tasks, where accurate boundary detection is crucial.",
-      "reason": "Other options may be applicable in certain contexts, but U-Net is specifically designed for biomedical image segmentation."
+      "correct_option": "Fully connected layers enhance the output of convolutional layers to prepare it for classification.",
+      "explanation": "In addition to convolutions, pooling, and recurrent layers (if applicable), fully connected layers classify the output from a convolutional network into specific classes. These layers serve as the final classifier in many CNN architectures.",
+      "reason": "The other options are either too narrow or incorrect."
     },
     {
-      "question": "Can CNNs be combined with RNNs to create a hybrid architecture?",
+      "question": "Why are recurrent neural networks combined with CNNs for sequential data?",
       "options": [
-        "Yes",
-        "No",
-        "Maybe",
-        "I don't know"
+        "Because both RNNs and CNNs are equally good at processing sequential data.",
+        "Both RNNs and CNNs struggle with sequential data, so combining them helps.",
+        "RNNs can learn temporal dependencies while CNNs focus on spatial features.",
+        "Neither RNNs nor CNNs process sequential data."
       ],
-      "correct_option": "Yes",
-      "explanation": "CNNs and RNNs can be combined in various ways, such as temporal convolutional networks or spatial-temporal recurrent networks, to leverage the strengths of both architectures.",
-      "reason": "This is a valid technique used in certain applications, such as video analysis or speech recognition."
+      "correct_option": "RNNs can learn temporal dependencies while CNNs focus on spatial features.",
+      "explanation": "CNNs excel at processing static images but struggle with sequential data due to their inability to capture temporal relationships. Recurrent neural networks, particularly RNNs and LSTMs, are well-suited for handling sequential inputs (like video frames or text images) by learning from past outputs in the sequence.",
+      "reason": "The other options are incorrect or oversimplify the complexity of the issue."
     }
   ]
 }

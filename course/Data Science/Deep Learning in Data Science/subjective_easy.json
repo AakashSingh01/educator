@@ -5,27 +5,27 @@
   "subject": "Data Science",
   "topic": "Deep Learning in Data Science",
   "notes_hash": "059da4dd160a27ecc9939e323e195264072a3f87120828df3fe7fe2ff299b845",
-  "generated_at": "2026-07-26T10:05:26.916056+00:00",
+  "generated_at": "2026-07-26T10:14:49.288204+00:00",
   "items": [
     {
       "question": "What inspired the creation of Artificial Neural Networks (ANNs)?",
-      "answer": "ANNs were inspired by human brains, composed of interconnected nodes (neurons) that process inputs and produce outputs."
+      "answer": "ANNs were inspired by human brains, with interconnected nodes (neurons) that process inputs and produce outputs."
     },
     {
-      "question": "Can you describe the role of Batch Normalization in ANN training?",
-      "answer": "Batch Normalization normalizes input data for each layer, enhancing stability and speed during training by adjusting the mean and variance of each feature."
+      "question": "How does Backpropagation work?",
+      "answer": "Backpropagation is an optimization algorithm used to train ANNs by minimizing the error between predicted and actual outputs through a process of gradient descent."
     },
     {
-      "question": "What is Transfer Learning and when is it used?",
-      "answer": "Transfer Learning uses pre-trained model's weights as a starting point for a new, but related task, allowing for faster adaptation to new data with minimal retraining."
+      "question": "What is the primary function of Batch Normalization?",
+      "answer": "The primary function of Batch Normalization is to normalize input data for each layer, enhancing stability and speed during training by adjusting the input values."
     },
     {
-      "question": "Explain how Convolutional Neural Networks (CNNs) process images?",
-      "answer": "CNNs process images by using convolutional and pooling layers to extract features from data, such as edges and textures, reducing spatial dimensions and increasing feature representation."
+      "question": "What is Transfer Learning used for?",
+      "answer": "Transfer Learning uses pre-trained model's weights as a starting point for a new, but related task, reducing the need for large amounts of labeled data."
     },
     {
-      "question": "Why are Activation Functions important in ANNs?",
-      "answer": "Activation Functions introduce non-linearity in ANN inputs, allowing ANNs to learn complex relationships between inputs and outputs, enabling tasks like classification and regression."
+      "question": "Can Deep Learning be applied to non-image data?",
+      "answer": "Yes, Deep Learning can be applied to various types of data such as text, audio, and time series data using different architectures like Recurrent Neural Networks (RNNs) or Long Short-Term Memory (LSTM) networks."
     }
   ]
 }
