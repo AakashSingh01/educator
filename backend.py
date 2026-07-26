@@ -2,11 +2,22 @@ import json
 import random
 import re
 import shutil
+import hashlib
+import pickle
+from concurrent.futures import ProcessPoolExecutor, as_completed
+from datetime import datetime, timezone
 from enum import Enum
 from pathlib import Path
 
 from learning_config import LEARNING_MODE_TYPES, TIMER_PRESETS, get_time_limit
 from llm import LLMClient, OllamaListener
+from question_bank_config import (
+    ITEMS_PER_DIFFICULTY,
+    PREPARATION_OUTPUT_ATTEMPTS,
+    QUESTION_BANK_DIFFICULTIES,
+    QUESTION_BANK_FILES,
+    QUESTION_BANK_VERSION,
+)
 
 class PageType(Enum):
     CATEGORY="category"
@@ -31,6 +42,7 @@ class LearningBackend:
         self.learning_types=("mcq", "subjective", "theory")
         self.learning_type_cycle=[]
         self.timer_preset="Infinite"
+        self.prepared_item_ids=set()
 
     def get_categories(self):
         """Return visible subject folders from the configured course directory."""
@@ -43,7 +55,7 @@ class LearningBackend:
         )
 
     # Notes preparation -------------------------------------------------
-    # A persisted stack makes the topic traversal depth-first and resumable.
+    # A persisted stack makes the topic traversal in-depth and resumable.
     def _notes_progress_path(self, subject):
         return self.course_path / self._folder_name(subject) / ".notes_progress.json"
 
@@ -93,7 +105,7 @@ class LearningBackend:
         return clean_name
 
     def begin_notes_session(self, subject, restart=False):
-        """Create or resume a subject's persisted depth-first notes plan."""
+        """Create or resume a subject's persisted in-depth notes plan."""
         subject = self._folder_name(subject)
 
         self.course_path.mkdir(parents=True, exist_ok=True)
@@ -317,14 +329,382 @@ class LearningBackend:
         self._save_notes_progress(subject, session)
         return self.get_notes_progress(subject)
 
+    # Reusable learning-item preparation --------------------------------
+    # The generated files stay beside notes.txt so a topic can be moved or
+    # copied as one self-contained learning unit.
+    @staticmethod
+    def _notes_hash(notes):
+        return hashlib.sha256(notes.encode("utf-8")).hexdigest()
+
+    @staticmethod
+    def _normalise_item_text(value):
+        return re.sub(r"\s+", " ", value.strip()).casefold() if isinstance(value, str) else ""
+
+    @staticmethod
+    def _json_response(response, error_message):
+        text = response.strip() if isinstance(response, str) else response
+        if isinstance(text, str) and text.startswith("```"):
+            text = text.split("\n", 1)[-1].rsplit("```", 1)[0].strip()
+        try:
+            data = json.loads(text)
+        except (TypeError, json.JSONDecodeError) as error:
+            raise ValueError(error_message) from error
+        if not isinstance(data, dict):
+            raise ValueError(error_message)
+        return data
+
+    def _retry_preparation_output(self, create, error_message):
+        last_error = None
+        for _ in range(PREPARATION_OUTPUT_ATTEMPTS):
+            try:
+                return create()
+            except ValueError as error:
+                last_error = error
+        raise ValueError(error_message) from last_error
+
+    def _question_bank_path(self, folder, item_type, difficulty):
+        return folder / QUESTION_BANK_FILES[item_type][difficulty]
+
+    def _read_question_bank(self, folder, item_type, difficulty, source_hash=None):
+        path = self._question_bank_path(folder, item_type, difficulty)
+        if not path.is_file():
+            return None
+        try:
+            data = json.loads(path.read_text(encoding="utf-8"))
+        except (OSError, json.JSONDecodeError):
+            return None
+        if not isinstance(data, dict) or not isinstance(data.get("items"), list):
+            return None
+        if data.get("version") != QUESTION_BANK_VERSION:
+            return None
+        if data.get("type") != item_type or data.get("difficulty") != difficulty:
+            return None
+        if source_hash is not None and data.get("notes_hash") != source_hash:
+            return None
+        return data
+
+    def _write_question_bank(self, folder, item_type, difficulty, subject, relative_topic, notes_hash, items):
+        data = {
+            "version": QUESTION_BANK_VERSION,
+            "type": item_type,
+            "difficulty": difficulty,
+            "subject": subject,
+            "topic": relative_topic,
+            "notes_hash": notes_hash,
+            "generated_at": datetime.now(timezone.utc).isoformat(),
+            "items": items,
+        }
+        path = self._question_bank_path(folder, item_type, difficulty)
+        temporary_path = path.with_suffix(".tmp")
+        try:
+            temporary_path.write_text(json.dumps(data, indent=2, ensure_ascii=False) + "\n", encoding="utf-8")
+            temporary_path.replace(path)
+        except OSError as error:
+            raise ValueError(f"Could not save prepared {item_type} items: {error}") from error
+
+    def list_question_bank_topics(self, subject, scope=""):
+        """Return the selected notes topic and every descendant that has notes."""
+        subject = self._folder_name(subject)
+        if scope not in self.get_learning_scopes(subject):
+            raise ValueError("Choose a valid subject or subtopic scope.")
+        root = (self.course_path / subject).resolve()
+        scope_folder = self._topic_folder(subject, scope)
+        if not scope_folder.is_dir():
+            return []
+        topics = []
+        for notes_path in scope_folder.rglob("notes.txt"):
+            relative = notes_path.parent.relative_to(root)
+            if not any(part.startswith(".") for part in relative.parts):
+                topics.append(str(relative))
+        return sorted(set(topics), key=lambda path: (len(Path(path).parts), path.casefold()))
+
+    def _generate_question_bank_outlines(self, subject, relative_topic, notes, item_type):
+        topic_label = subject if not relative_topic else f"{subject} / {relative_topic}"
+        descriptions = {
+            "subjective": "short subjective questions that require a concise written answer",
+            "mcq": "multiple-choice question stems, without options or answers",
+            "theory": "theory-card headings that invite a concise explanatory card",
+        }
+
+        def create():
+            prompt = (
+                f"Subject: {subject}\nTopic: {topic_label}\nPrepared notes:\n{notes[:12000]}\n\n"
+                f"Create exactly 15 distinct {descriptions[item_type]} that can be answered from these notes. "
+                "Use five Easy, five Medium, and five Hard items. Difficulty must reflect the reasoning needed, "
+                "not obscure facts. Do not repeat the same concept with superficial wording changes. "
+                'Return exactly JSON: {"easy":["item 1","item 2","item 3","item 4","item 5"],'
+                '"medium":["item 1","item 2","item 3","item 4","item 5"],'
+                '"hard":["item 1","item 2","item 3","item 4","item 5"]}. '
+                "Return the item text only; do not include answers, options, or explanations yet."
+            )
+            response = self.llm.chat(
+                prompt,
+                system_prompt="You design accurate, varied educational practice. Return valid JSON only.",
+            )
+            data = self._json_response(response, "The model did not return valid distinct item outlines.")
+            cleaned = {}
+            seen = set()
+            for difficulty in QUESTION_BANK_DIFFICULTIES:
+                entries = data.get(difficulty) or data.get(difficulty.title())
+                if not isinstance(entries, list) or len(entries) != ITEMS_PER_DIFFICULTY:
+                    raise ValueError("The model did not return all requested outlines.")
+                values = []
+                for entry in entries:
+                    normalised = self._normalise_item_text(entry)
+                    if not normalised or normalised in seen:
+                        raise ValueError("The model returned duplicate or empty outlines.")
+                    seen.add(normalised)
+                    values.append(entry.strip())
+                cleaned[difficulty] = values
+            return cleaned
+
+        return self._retry_preparation_output(create, "The model could not prepare distinct item outlines. Please run it again.")
+
+    def _generate_subjective_answers(self, subject, relative_topic, notes, difficulty, questions):
+        def create():
+            prompt = (
+                f"Subject: {subject}\nTopic: {subject if not relative_topic else f'{subject} / {relative_topic}'}\n"
+                f"Prepared notes:\n{notes[:12000]}\n\nDifficulty: {difficulty.title()}\n"
+                f"Answer these five questions with short, accurate model answers:\n{json.dumps(questions, ensure_ascii=False)}\n\n"
+                'Return exactly JSON: {"items":[{"question":"exact question text","answer":"short model answer"}]}. '
+                "Include each supplied question exactly once and do not add questions."
+            )
+            data = self._json_response(
+                self.llm.chat(prompt, system_prompt="You write concise, accurate educational model answers. Return valid JSON only."),
+                "The model did not return valid subjective answers.",
+            )
+            return self._match_batch_items(data.get("items"), questions, "question", ("answer",))
+
+        return self._retry_preparation_output(create, "The model could not prepare all subjective answers. Please run it again.")
+
+    def _generate_objective_answers(self, subject, relative_topic, notes, difficulty, questions):
+        def create():
+            prompt = (
+                f"Subject: {subject}\nTopic: {subject if not relative_topic else f'{subject} / {relative_topic}'}\n"
+                f"Prepared notes:\n{notes[:12000]}\n\nDifficulty: {difficulty.title()}\n"
+                f"Create four options and a complete answer for these five exact question stems:\n{json.dumps(questions, ensure_ascii=False)}\n\n"
+                'Return exactly JSON: {"items":[{"question":"exact question text","options":["A","B","C","D"],'
+                '"correct_option":"one exact option","explanation":"why it is correct","reason":"why the other options do not fit"}]}. '
+                "Include each supplied question exactly once. Every option must be plausible, distinct, and only one may be correct."
+            )
+            data = self._json_response(
+                self.llm.chat(prompt, system_prompt="You create precise, fair multiple-choice questions. Return valid JSON only."),
+                "The model did not return valid objective answers.",
+            )
+            items = self._match_batch_items(
+                data.get("items"), questions, "question", ("options", "correct_option", "explanation", "reason")
+            )
+            for item in items:
+                options = item["options"]
+                if (
+                    not isinstance(options, list)
+                    or len(options) != 4
+                    or not all(isinstance(option, str) and option.strip() for option in options)
+                    or len({option.strip().casefold() for option in options}) != 4
+                ):
+                    raise ValueError("The model returned invalid objective options.")
+                item["options"] = [option.strip() for option in options]
+                correct = item["correct_option"].strip() if isinstance(item["correct_option"], str) else ""
+                if correct.upper() in {"A", "B", "C", "D"}:
+                    correct = item["options"][ord(correct.upper()) - ord("A")]
+                option_map = {option.casefold(): option for option in item["options"]}
+                correct = option_map.get(correct.casefold(), correct)
+                if correct not in item["options"]:
+                    raise ValueError("The model returned an objective answer outside its options.")
+                item["correct_option"] = correct
+            return items
+
+        return self._retry_preparation_output(create, "The model could not prepare all objective answers. Please run it again.")
+
+    def _generate_theory_cards(self, subject, relative_topic, notes, difficulty, titles):
+        def create():
+            prompt = (
+                f"Subject: {subject}\nTopic: {subject if not relative_topic else f'{subject} / {relative_topic}'}\n"
+                f"Prepared notes:\n{notes[:12000]}\n\nDifficulty: {difficulty.title()}\n"
+                f"Write concise but useful theory cards for these five exact headings:\n{json.dumps(titles, ensure_ascii=False)}\n\n"
+                'Return exactly JSON: {"items":[{"title":"exact heading","content":"clear explanation"}]}. '
+                "Include every supplied heading exactly once. Keep the cards self-contained and grounded in the notes."
+            )
+            data = self._json_response(
+                self.llm.chat(prompt, system_prompt="You write clear, compact educational theory cards. Return valid JSON only."),
+                "The model did not return valid theory cards.",
+            )
+            return self._match_batch_items(data.get("items"), titles, "title", ("content",))
+
+        return self._retry_preparation_output(create, "The model could not prepare all theory cards. Please run it again.")
+
+    def _match_batch_items(self, items, requested_texts, text_key, required_keys):
+        if not isinstance(items, list) or len(items) != len(requested_texts):
+            raise ValueError("The model did not return the requested batch.")
+        expected = {self._normalise_item_text(text): text for text in requested_texts}
+        matched = {}
+        for item in items:
+            if not isinstance(item, dict):
+                raise ValueError("The model returned an invalid batch item.")
+            item_key = self._normalise_item_text(item.get(text_key))
+            if item_key not in expected or item_key in matched:
+                raise ValueError("The model did not preserve the requested item text.")
+            cleaned = {text_key: expected[item_key]}
+            for required_key in required_keys:
+                value = item.get(required_key)
+                if not isinstance(value, str) or not value.strip():
+                    if required_key == "options":
+                        cleaned[required_key] = value
+                        continue
+                    raise ValueError("The model returned an incomplete batch item.")
+                cleaned[required_key] = value.strip()
+            matched[item_key] = cleaned
+        if set(matched) != set(expected):
+            raise ValueError("The model did not answer every requested item.")
+        return [matched[self._normalise_item_text(text)] for text in requested_texts]
+
+    def prepare_topic_question_bank(self, subject, relative_topic="", overwrite=False):
+        """Create the nine reusable JSON files for one saved notes topic."""
+        folder = self._topic_folder(subject, relative_topic)
+        notes_path = folder / "notes.txt"
+        try:
+            notes = notes_path.read_text(encoding="utf-8").strip()
+        except OSError as error:
+            return {"topic": relative_topic, "status": "skipped", "message": f"Could not read notes: {error}"}
+        if not notes:
+            return {"topic": relative_topic, "status": "skipped", "message": "No notes.txt content"}
+
+        notes_hash = self._notes_hash(notes)
+        all_current = all(
+            self._read_question_bank(folder, item_type, difficulty, notes_hash) is not None
+            for item_type in QUESTION_BANK_FILES
+            for difficulty in QUESTION_BANK_DIFFICULTIES
+        )
+        if all_current and not overwrite:
+            return {"topic": relative_topic, "status": "cached", "files": 0}
+
+        generated_files = 0
+        for item_type in ("subjective", "mcq", "theory"):
+            outlines = self._generate_question_bank_outlines(subject, relative_topic, notes, item_type)
+            for difficulty in QUESTION_BANK_DIFFICULTIES:
+                if item_type == "subjective":
+                    items = self._generate_subjective_answers(
+                        subject, relative_topic, notes, difficulty, outlines[difficulty]
+                    )
+                elif item_type == "mcq":
+                    items = self._generate_objective_answers(
+                        subject, relative_topic, notes, difficulty, outlines[difficulty]
+                    )
+                else:
+                    items = self._generate_theory_cards(
+                        subject, relative_topic, notes, difficulty, outlines[difficulty]
+                    )
+                self._write_question_bank(
+                    folder, item_type, difficulty, subject, relative_topic, notes_hash, items
+                )
+                generated_files += 1
+        return {"topic": relative_topic, "status": "generated", "files": generated_files}
+
+    def prepare_question_banks(self, subject, scope="", max_workers=1, overwrite=False):
+        """Prepare reusable items for all saved notes in a topic subtree.
+
+        The model client is passed to worker processes only when it can be safely
+        serialized. Custom clients that cannot be serialized still work sequentially.
+        """
+        subject = self._folder_name(subject)
+        topics = self.list_question_bank_topics(subject, scope)
+        summary = {
+            "subject": subject,
+            "scope": scope,
+            "topics": len(topics),
+            "generated": 0,
+            "cached": 0,
+            "skipped": [],
+            "failed": [],
+            "workers": 1,
+            "parallel_fallback": None,
+        }
+        if not topics:
+            summary["skipped"].append({"topic": scope, "message": "No notes.txt files were found."})
+            return summary
+
+        try:
+            workers = max(1, int(max_workers))
+        except (TypeError, ValueError):
+            workers = 1
+        workers = min(workers, len(topics))
+        use_processes = workers > 1
+        if use_processes:
+            try:
+                pickle.dumps(self.llm)
+            except Exception:
+                use_processes = False
+                summary["parallel_fallback"] = (
+                    "The configured AI client cannot be shared with worker processes; used one worker instead."
+                )
+
+        def run_sequentially():
+            sequential_results = []
+            for topic in topics:
+                try:
+                    sequential_results.append(self.prepare_topic_question_bank(subject, topic, overwrite))
+                except Exception as error:
+                    sequential_results.append({"topic": topic, "status": "failed", "message": str(error)})
+            return sequential_results
+
+        results = []
+        if use_processes:
+            summary["workers"] = workers
+            try:
+                with ProcessPoolExecutor(max_workers=workers) as executor:
+                    futures = {
+                        executor.submit(
+                            _prepare_question_bank_worker,
+                            str(self.course_path), subject, topic, self.llm, overwrite,
+                        ): topic
+                        for topic in topics
+                    }
+                    for future in as_completed(futures):
+                        topic = futures[future]
+                        try:
+                            results.append(future.result())
+                        except Exception as error:
+                            results.append({"topic": topic, "status": "failed", "message": str(error)})
+            except (OSError, RuntimeError) as error:
+                summary["workers"] = 1
+                summary["parallel_fallback"] = (
+                    f"Parallel preparation was unavailable ({error}); used one worker instead."
+                )
+                results = run_sequentially()
+        else:
+            results = run_sequentially()
+
+        for result in results:
+            status = result.get("status")
+            if status == "generated":
+                summary["generated"] += 1
+            elif status == "cached":
+                summary["cached"] += 1
+            elif status == "skipped":
+                summary["skipped"].append(result)
+            else:
+                summary["failed"].append(result)
+        return summary
+
     def start_course(self, category, scope="", allowed_types=None, timer_preset="Normal"):
-        """Start a fresh, generated learning session for one subject."""
+        """Start a learning session from prepared items for one subject boundary."""
         allowed_types = tuple(allowed_types or LEARNING_MODE_TYPES)
         valid_types = {"mcq", "subjective", "theory"}
         if not allowed_types or not set(allowed_types).issubset(valid_types):
             raise ValueError("Choose at least one valid learning item type.")
         if timer_preset not in TIMER_PRESETS:
             raise ValueError("Choose a valid timer preset.")
+        if scope not in self.get_learning_scopes(category):
+            raise ValueError("Choose a valid subject or subtopic scope.")
+        available_types = self.get_prepared_item_types(category, scope)
+        missing_types = [item_type for item_type in allowed_types if item_type not in available_types]
+        if missing_types:
+            labels = {"mcq": "objective questions", "subjective": "subjective questions", "theory": "theory cards"}
+            missing_label = ", ".join(labels[item_type] for item_type in missing_types)
+            raise ValueError(
+                f"No prepared {missing_label} are available for this area. "
+                "Run Question Preparation from Notes first."
+            )
         self.steps.clear()
         self.ask_history.clear()
         self.learning_context = self.select_learning_context(category, scope)
@@ -332,12 +712,13 @@ class LearningBackend:
         self.learning_boundary_label = category if not scope else f"{category} / {scope}"
         self.learning_types = allowed_types
         self.learning_type_cycle = []
+        self.prepared_item_ids.clear()
         self.timer_preset = timer_preset
         self.on_event("chapter_started", category=category)
 
     def get_learning_scopes(self, subject):
         """Return the full subject and every saved subtopic folder as selectable scopes."""
-        root = self.course_path / self._folder_name(subject)
+        root = (self.course_path / self._folder_name(subject)).resolve()
         if not root.is_dir():
             return [""]
         scopes = [""]
@@ -350,7 +731,7 @@ class LearningBackend:
 
     def get_direct_learning_subtopics(self, subject, scope=""):
         """Return only one folder level for the setup screen's drill-down picker."""
-        root = self.course_path / self._folder_name(subject)
+        root = (self.course_path / self._folder_name(subject)).resolve()
         folder = root / Path(scope)
         if not folder.is_dir():
             return []
@@ -359,9 +740,143 @@ class LearningBackend:
             if child.is_dir() and not child.name.startswith(".")
         )
 
+    def _prepared_step_from_item(self, item_type, item, time_limit):
+        """Validate one cached item before it is shown to a learner."""
+        if not isinstance(item, dict):
+            return None
+        if item_type == "subjective":
+            question = item.get("question")
+            answer = item.get("answer")
+            if isinstance(question, str) and question.strip() and isinstance(answer, str) and answer.strip():
+                return {
+                    "type": PageType.SUBJECTIVE,
+                    "question": question.strip(),
+                    "sample_answer": answer.strip(),
+                    "time_limit": time_limit,
+                    "difficulty": item.get("difficulty"),
+                }
+            return None
+        if item_type == "theory":
+            title = item.get("title")
+            content = item.get("content")
+            if isinstance(title, str) and title.strip() and isinstance(content, str) and content.strip():
+                return {
+                    "type": PageType.THEORY,
+                    "title": title.strip(),
+                    "content": content.strip(),
+                    "time_limit": time_limit,
+                    "difficulty": item.get("difficulty"),
+                }
+            return None
+        question = item.get("question")
+        options = item.get("options")
+        correct_option = item.get("correct_option")
+        explanation = item.get("explanation")
+        if not (
+            isinstance(question, str) and question.strip()
+            and isinstance(options, list) and len(options) == 4
+            and all(isinstance(option, str) and option.strip() for option in options)
+            and len({option.strip().casefold() for option in options}) == 4
+            and isinstance(correct_option, str) and correct_option.strip()
+            and isinstance(explanation, str) and explanation.strip()
+        ):
+            return None
+        options = [option.strip() for option in options]
+        option_map = {option.casefold(): option for option in options}
+        correct_option = option_map.get(correct_option.strip().casefold(), correct_option.strip())
+        if correct_option not in options:
+            return None
+        return {
+            "type": PageType.MCQ,
+            "question": question.strip(),
+            "options": options,
+            "answer": options.index(correct_option),
+            "correct_option": correct_option,
+            "explanation": explanation.strip(),
+            "reason": item.get("reason", ""),
+            "time_limit": time_limit,
+            "difficulty": item.get("difficulty"),
+        }
+
+    def _prepared_item_candidates(self, subject, scope, item_type):
+        """Yield valid saved items inside the exact requested topic boundary."""
+        subject = self._folder_name(subject)
+        root = (self.course_path / subject).resolve()
+        if scope not in self.get_learning_scopes(subject):
+            return
+        scope_folder = self._topic_folder(subject, scope)
+        if not scope_folder.is_dir():
+            return
+        for notes_path in scope_folder.rglob("notes.txt"):
+            relative_topic = notes_path.parent.relative_to(root)
+            if any(part.startswith(".") for part in relative_topic.parts):
+                continue
+            try:
+                notes = notes_path.read_text(encoding="utf-8").strip()
+            except OSError:
+                continue
+            if not notes:
+                continue
+            source_hash = self._notes_hash(notes)
+            label = subject if not relative_topic.parts else f"{subject} / {relative_topic}"
+            for difficulty in QUESTION_BANK_DIFFICULTIES:
+                bank = self._read_question_bank(notes_path.parent, item_type, difficulty, source_hash)
+                if not bank:
+                    continue
+                for index, item in enumerate(bank["items"]):
+                    step = self._prepared_step_from_item(
+                        item_type, item, get_time_limit(self.timer_preset, item_type)
+                    )
+                    if step is None:
+                        continue
+                    step["difficulty"] = difficulty
+                    yield (
+                        f"{item_type}:{self._question_bank_path(notes_path.parent, item_type, difficulty)}:{index}",
+                        step,
+                        {"label": label, "notes": notes},
+                    )
+
+    def get_prepared_item_types(self, subject, scope=""):
+        """Return item types that have at least one current, usable prepared item."""
+        available = set()
+        for item_type in ("mcq", "subjective", "theory"):
+            if next(self._prepared_item_candidates(subject, scope, item_type), None) is not None:
+                available.add(item_type)
+        return available
+
+    def _select_prepared_step(self, subject, item_type):
+        """Reservoir-sample an unused cached item, then recycle after one full pass."""
+        selected = None
+        fallback = None
+        unseen_count = 0
+        fallback_count = 0
+        for identifier, step, context in self._prepared_item_candidates(
+            subject, self.learning_scope, item_type
+        ):
+            fallback_count += 1
+            if random.randrange(fallback_count) == 0:
+                fallback = (identifier, step, context)
+            if identifier in self.prepared_item_ids:
+                continue
+            unseen_count += 1
+            if random.randrange(unseen_count) == 0:
+                selected = (identifier, step, context)
+        if selected is None and fallback is not None:
+            self.prepared_item_ids = {
+                identifier for identifier in self.prepared_item_ids
+                if not identifier.startswith(f"{item_type}:")
+            }
+            selected = fallback
+        if selected is None:
+            return None
+        identifier, step, context = selected
+        self.prepared_item_ids.add(identifier)
+        self.learning_context = context
+        return step
+
     def select_learning_context(self, subject, scope="", exclude_label=None):
         """Randomly choose one notes file from the chosen subject or subtopic scope."""
-        root = self.course_path / self._folder_name(subject)
+        root = (self.course_path / self._folder_name(subject)).resolve()
         if scope not in self.get_learning_scopes(subject):
             raise ValueError("Choose a valid subject or subtopic scope.")
         scope_folder = root / Path(scope)
@@ -472,16 +987,11 @@ class LearningBackend:
         )
 
     def generate_follow_up_step(self, category, comment):
-        """Create a fresh item from a newly selected note in the current learning scope."""
+        """Show another cached item from the selected learning boundary."""
         self.ask_history.clear()
-        self.learning_context = self.select_learning_context(
-            category,
-            self.learning_scope,
-            exclude_label=self.get_learning_context_label(),
-        )
         return self._generate_random_step(
             category,
-            "Create a new relevant learning item for this subject.",
+            "Show another prepared learning item for this subject.",
         )
 
     def ask_about_result(self, category, step, question):
@@ -535,12 +1045,14 @@ class LearningBackend:
     def _generate_random_step(self, category, instruction, follow_up=False):
         expected_type = self._next_learning_type()
         try:
-            return self.generate_step(
-                category,
-                instruction,
-                follow_up=follow_up,
-                expected_type=expected_type,
-            )
+            step = self._select_prepared_step(category, expected_type)
+            if step is None:
+                raise ValueError(
+                    "This prepared item is unavailable or its notes have changed. "
+                    "Run Question Preparation again for this learning area."
+                )
+            self.steps.append(step)
+            return len(self.steps) - 1
         except Exception:
             # Keep failed generations from consuming their turn in the balanced cycle.
             self.learning_type_cycle.insert(0, expected_type)
@@ -734,3 +1246,9 @@ class LearningBackend:
 
     def analytics(self):
         return {"score":self.score,"total_events":len(self.events)}
+
+
+def _prepare_question_bank_worker(course_path, subject, relative_topic, llm_client, overwrite):
+    """Process-pool entry point; keep it module-level so it is pickleable."""
+    worker_backend = LearningBackend(course_path=Path(course_path), llm_client=llm_client)
+    return worker_backend.prepare_topic_question_bank(subject, relative_topic, overwrite)
