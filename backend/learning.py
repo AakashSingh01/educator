@@ -359,11 +359,18 @@ class LearningSessionMixin:
             result = json.loads(self.llm.chat(prompt, system_prompt=system_prompt))
         except (TypeError, json.JSONDecodeError) as error:
             raise ValueError("The model could not assess this answer. Please try again.") from error
-        correct = result.get("correct") if isinstance(result, dict) else None
+        score = result.get("score") if isinstance(result, dict) else None
         feedback = result.get("feedback") if isinstance(result, dict) else None
-        if not isinstance(correct, bool) or not isinstance(feedback, str) or not feedback.strip():
+        if (
+            isinstance(score, bool)
+            or not isinstance(score, (int, float))
+            or not 0 <= score <= 10
+            or not isinstance(feedback, str)
+            or not feedback.strip()
+        ):
             raise ValueError("The model returned an invalid assessment. Please try again.")
-        return {"correct": correct, "feedback": feedback.strip()}
+        score = round(float(score), 1)
+        return {"score": score, "correct": score >= 5, "feedback": feedback.strip()}
 
     def on_event(self, event, **kwargs):
         self.events.append({"event": event, **kwargs})

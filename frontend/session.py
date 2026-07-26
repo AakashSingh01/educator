@@ -44,7 +44,12 @@ def _goto_next(backend):
 def _show_submit_feedback():
     feedback = st.session_state.last_submit
     if feedback and feedback.get("step") == st.session_state.step:
-        (st.success if feedback["status"] == "success" else st.error)(feedback["message"])
+        message = {
+            "success": st.success,
+            "warning": st.warning,
+            "error": st.error,
+        }.get(feedback["status"], st.info)
+        message(feedback["message"])
         if feedback.get("info"):
             st.info(feedback["info"])
 
@@ -181,10 +186,11 @@ def render_learning_session(backend):
             with st.spinner("Checking your answer..."):
                 assessment = backend.evaluate_subjective_answer(st.session_state.category, step, answer)
             backend.on_event("answer_submitted", step_id=st.session_state.step, answer=answer, timed_out=False)
+            score = assessment["score"]
             st.session_state.last_submit = {
                 "step": st.session_state.step,
-                "status": "success" if assessment["correct"] else "error",
-                "message": "Correct" if assessment["correct"] else "Not quite",
+                "status": "success" if score >= 7 else "warning" if score >= 4 else "error",
+                "message": f"Score: {score:g}/10",
                 "info": f"{assessment['feedback']}\n\nSuggested answer: {step.get('sample_answer', 'No sample answer available.')}",
                 "submitted": True,
             }
