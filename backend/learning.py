@@ -13,6 +13,15 @@ from .models import PageType
 
 
 class LearningSessionMixin:
+    @staticmethod
+    def _is_within_scope(relative_topic, scope):
+        """Return whether a notes folder is the chosen scope or one of its children."""
+
+        if not scope:
+            return True
+        selected_scope = Path(scope)
+        return relative_topic == selected_scope or selected_scope in relative_topic.parents
+
     def start_course(self, category, scope="", allowed_types=None, timer_preset="Normal"):
         allowed_types = tuple(allowed_types or LEARNING_MODE_TYPES)
         valid_types = {"mcq", "subjective", "theory"}
@@ -107,6 +116,8 @@ class LearningSessionMixin:
             relative_topic = notes_path.parent.relative_to(root)
             if any(part.startswith(".") for part in relative_topic.parts):
                 continue
+            if not self._is_within_scope(relative_topic, scope):
+                continue
             try:
                 notes = notes_path.read_text(encoding="utf-8").strip()
             except OSError:
@@ -176,6 +187,8 @@ class LearningSessionMixin:
                 except OSError:
                     continue
                 relative_topic = notes_path.parent.relative_to(root)
+                if not self._is_within_scope(relative_topic, scope):
+                    continue
                 label = subject if not relative_topic.parts else f"{subject} / {relative_topic}"
                 fallback_count += 1
                 if random.randrange(fallback_count) == 0:

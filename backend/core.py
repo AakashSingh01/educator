@@ -5,11 +5,12 @@ from pathlib import Path
 from llm import LLMClient, create_llm_client
 
 from .learning import LearningSessionMixin
+from .mock_test import MockTestMixin
 from .notes import NotesPreparationMixin
 from .question_bank import QuestionBankMixin
 
 
-class LearningBackend(NotesPreparationMixin, QuestionBankMixin, LearningSessionMixin):
+class LearningBackend(NotesPreparationMixin, QuestionBankMixin, LearningSessionMixin, MockTestMixin):
     """Backend facade used by Streamlit and worker processes."""
 
     def __init__(self, course_path=None, llm_client=None):
@@ -28,6 +29,8 @@ class LearningBackend(NotesPreparationMixin, QuestionBankMixin, LearningSessionM
         self.learning_type_cycle = []
         self.timer_preset = "Infinite"
         self.prepared_item_ids = set()
+        self.mock_test_session = None
+        self.mock_test_counter = 0
 
     def get_categories(self):
         if not self.course_path.is_dir():

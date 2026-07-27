@@ -21,6 +21,9 @@ DEFAULTS = {
     "learning_types": list(QUESTION_MODE_TYPES["Both"]),
     "is_generating": False,
     "ask_messages": [],
+    "mock_test_question_index": 0,
+    "mock_test_end_time": None,
+    "mock_test_timed_out": False,
 }
 
 
