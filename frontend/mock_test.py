@@ -3,7 +3,6 @@
 import time
 
 import streamlit as st
-from streamlit_autorefresh import st_autorefresh
 
 
 def _format_remaining(seconds):
@@ -127,6 +126,8 @@ def _render_mock_test_setup(backend):
             incorrect_marks,
         )
         st.session_state.mock_test_question_index = 0
+        st.session_state[_active_question_key(test["id"])] = 0
+        st.session_state[_navigator_key(test["id"])] = _question_token(0)
         st.session_state.mock_test_end_time = time.time() + test["duration_seconds"]
         st.session_state.mock_test_timed_out = False
         st.rerun()
@@ -134,14 +135,43 @@ def _render_mock_test_setup(backend):
         st.error(str(error))
 
 
-def _set_mock_test_question(index, navigator_key):
-    st.session_state[navigator_key] = _question_token(index)
+def _navigator_key(test_id):
+    return f"mock_test_jump_{test_id}"
 
 
-def _save_mock_test_answer(backend, question_index, options, answer_key):
+def _active_question_key(test_id):
+    return f"mock_test_active_question_{test_id}"
+
+
+def _set_mock_test_question(index, test_id, total_questions):
+    """Keep navigation in one stable state value, independent of the selectbox."""
+
+    current_index = _normalise_question_index(index, total_questions)
+    st.session_state[_active_question_key(test_id)] = current_index
+    st.session_state[_navigator_key(test_id)] = _question_token(current_index)
+
+
+def _select_mock_test_question(test_id, total_questions):
+    navigator_key = _navigator_key(test_id)
+    current_index = _index_from_question_token(
+        st.session_state.get(navigator_key), total_questions
+    )
+    _set_mock_test_question(current_index, test_id, total_questions)
+
+
+def _save_mock_test_answer(
+    backend,
+    question_index,
+    options,
+    answer_key,
+    test_id,
+    total_questions,
+):
     selected_option = st.session_state.get(answer_key)
     answer_index = options.index(selected_option) if selected_option in options else None
     backend.record_mock_test_answer(question_index, answer_index)
+    # A timer rerun must not move an answer submission back to Question 1.
+    _set_mock_test_question(question_index, test_id, total_questions)
 
 
 def _question_label(test, index):
@@ -171,7 +201,7 @@ def _render_mock_test_summary(test):
     unattempted.metric("Not attempted", result["unattempted"])
 
 
-def _render_mock_test_question(backend, test, current_index):
+def _render_mock_test_question(backend, test, current_index, total_questions):
     question = test["questions"][current_index]
     submitted = test["submitted"]
     st.subheader(f"Question {current_index + 1}")
@@ -189,7 +219,14 @@ def _render_mock_test_question(backend, test, current_index):
         key=answer_key,
         disabled=submitted,
         on_change=_save_mock_test_answer if not submitted else None,
-        args=(backend, current_index, question["options"], answer_key) if not submitted else None,
+        args=(
+            backend,
+            current_index,
+            question["options"],
+            answer_key,
+            test["id"],
+            total_questions,
+        ) if not submitted else None,
         persist_state="session",
     )
 
@@ -206,41 +243,59 @@ def _render_mock_test_question(backend, test, current_index):
             st.caption(question["reason"])
 
 
+@st.fragment(run_every=1)
+def _render_mock_test_timer(backend, test_id, timer_slot):
+    """Refresh only the countdown; leave the active question widgets untouched."""
+
+    test = backend.get_mock_test()
+    if not test or test["id"] != test_id or test["submitted"]:
+        return
+
+    end_time = st.session_state.get("mock_test_end_time")
+    if end_time is None:
+        end_time = time.time() + test["duration_seconds"]
+        st.session_state.mock_test_end_time = end_time
+    remaining = max(0, int(end_time - time.time()))
+    with timer_slot:
+        timer_slot.metric("Time left", _format_remaining(remaining))
+
+    if remaining == 0:
+        backend.submit_mock_test()
+        st.session_state.mock_test_end_time = None
+        st.session_state.mock_test_timed_out = True
+        st.rerun()
+
+
 def _render_mock_test_attempt(backend, test):
     total_questions = len(test["questions"])
     test_id = test["id"]
-    navigator_key = f"mock_test_jump_{test_id}"
+    navigator_key = _navigator_key(test_id)
+    active_key = _active_question_key(test_id)
     navigator_options = [_question_token(index) for index in range(total_questions)]
-    existing_navigator_value = st.session_state.get(navigator_key)
-    if existing_navigator_value not in navigator_options:
-        legacy_index = _index_from_question_token(
-            existing_navigator_value
-            if existing_navigator_value is not None
-            else st.session_state.get("mock_test_question_index", 0),
+    existing_active_index = st.session_state.get(active_key)
+    if existing_active_index is None:
+        # Preserve the selected question for a test that was already open
+        # before the stable active-question key was introduced.
+        existing_active_index = _index_from_question_token(
+            st.session_state.get(
+                navigator_key,
+                st.session_state.get("mock_test_question_index", 0),
+            ),
             total_questions,
         )
-        st.session_state[navigator_key] = _question_token(legacy_index)
-
-    if not test["submitted"]:
-        end_time = st.session_state.get("mock_test_end_time")
-        if end_time is None:
-            end_time = time.time() + test["duration_seconds"]
-            st.session_state.mock_test_end_time = end_time
-        remaining = max(0, int(end_time - time.time()))
-        if remaining == 0:
-            backend.submit_mock_test()
-            st.session_state.mock_test_end_time = None
-            st.session_state.mock_test_timed_out = True
-            st.rerun()
-        st_autorefresh(interval=1000, key=f"mock_test_timer_{test_id}")
-    else:
-        remaining = None
+    active_index = _normalise_question_index(existing_active_index, total_questions)
+    # Set both values before their widgets render. This also heals stale state
+    # left by tests created before the stable active-question key existed.
+    _set_mock_test_question(active_index, test_id, total_questions)
 
     st.title("Mock test review" if test["submitted"] else "Mock test")
     progress = backend.get_mock_test_progress()
     status, timer, marks = st.columns(3)
     status.metric("Attempted", f"{progress['attempted']} / {progress['total']}")
-    timer.metric("Time left", "Submitted" if test["submitted"] else _format_remaining(remaining))
+    if test["submitted"]:
+        timer.metric("Time left", "Submitted")
+    else:
+        _render_mock_test_timer(backend, test_id, timer)
     marks.metric("Marking", f"{_format_marks(test['correct_marks'])} / {_format_marks(test['incorrect_marks'])}")
     st.progress(progress["attempted"] / progress["total"], text=f"{progress['unattempted']} question(s) still not attempted")
 
@@ -250,31 +305,35 @@ def _render_mock_test_attempt(backend, test):
     if test["submitted"]:
         _render_mock_test_summary(test)
 
-    selected_question = st.selectbox(
+    st.selectbox(
         "Jump to any question",
         options=navigator_options,
         format_func=lambda token: _question_label(
             test, _index_from_question_token(token, total_questions)
         ),
         key=navigator_key,
+        on_change=_select_mock_test_question,
+        args=(test_id, total_questions),
         help="Search by question number in this list. The icon shows whether the question is attempted, and after submission whether it is correct.",
     )
-    current_index = _index_from_question_token(selected_question, total_questions)
-    _render_mock_test_question(backend, test, current_index)
+    current_index = _normalise_question_index(
+        st.session_state.get(active_key), total_questions
+    )
+    _render_mock_test_question(backend, test, current_index, total_questions)
 
     navigation = st.container(horizontal=True)
     navigation.button(
         "Previous question",
         disabled=current_index == 0,
         on_click=_set_mock_test_question,
-        args=(current_index - 1, navigator_key),
+        args=(current_index - 1, test_id, total_questions),
         key=f"mock_test_previous_{test_id}_{current_index}",
     )
     navigation.button(
         "Next question",
         disabled=current_index == total_questions - 1,
         on_click=_set_mock_test_question,
-        args=(current_index + 1, navigator_key),
+        args=(current_index + 1, test_id, total_questions),
         key=f"mock_test_next_{test_id}_{current_index}",
     )
 
