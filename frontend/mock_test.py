@@ -19,6 +19,16 @@ def _format_marks(value):
     return f"{value:+g}" if value else "0"
 
 
+def _normalise_question_index(value, total_questions):
+    """Convert stale widget/session values to a safe zero-based question index."""
+
+    try:
+        index = int(value)
+    except (TypeError, ValueError):
+        index = 0
+    return min(max(0, index), max(0, total_questions - 1))
+
+
 def _return_to_learning_home(backend):
     backend.clear_mock_test()
     st.session_state.mode = "learn"
@@ -119,8 +129,11 @@ def _set_mock_test_question(index, test_id):
     st.session_state[f"mock_test_jump_{test_id}"] = index
 
 
-def _sync_mock_test_question(navigator_key):
-    st.session_state.mock_test_question_index = st.session_state[navigator_key]
+def _sync_mock_test_question(navigator_key, total_questions):
+    st.session_state.mock_test_question_index = _normalise_question_index(
+        st.session_state.get(navigator_key),
+        total_questions,
+    )
 
 
 def _save_mock_test_answer(backend, question_index, options, answer_key):
@@ -194,8 +207,9 @@ def _render_mock_test_question(backend, test, current_index):
 def _render_mock_test_attempt(backend, test):
     total_questions = len(test["questions"])
     test_id = test["id"]
-    current_index = st.session_state.get("mock_test_question_index", 0)
-    current_index = min(max(0, current_index), total_questions - 1)
+    current_index = _normalise_question_index(
+        st.session_state.get("mock_test_question_index", 0), total_questions
+    )
     st.session_state.mock_test_question_index = current_index
 
     if not test["submitted"]:
@@ -236,10 +250,13 @@ def _render_mock_test_attempt(backend, test):
         format_func=lambda index: _question_label(test, index),
         key=navigator_key,
         on_change=_sync_mock_test_question,
-        args=(navigator_key,),
+        args=(navigator_key, total_questions),
         help="Search by question number in this list. The icon shows whether the question is attempted, and after submission whether it is correct.",
     )
-    current_index = st.session_state.mock_test_question_index
+    current_index = _normalise_question_index(
+        st.session_state.get("mock_test_question_index", 0), total_questions
+    )
+    st.session_state.mock_test_question_index = current_index
     _render_mock_test_question(backend, test, current_index)
 
     navigation = st.container(horizontal=True)
