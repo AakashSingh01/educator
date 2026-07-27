@@ -29,6 +29,16 @@ def _normalise_question_index(value, total_questions):
     return min(max(0, index), max(0, total_questions - 1))
 
 
+def _question_token(index):
+    return f"question:{index}"
+
+
+def _index_from_question_token(value, total_questions):
+    if isinstance(value, str) and value.startswith("question:"):
+        value = value.split(":", 1)[1]
+    return _normalise_question_index(value, total_questions)
+
+
 def _return_to_learning_home(backend):
     backend.clear_mock_test()
     st.session_state.mode = "learn"
@@ -124,16 +134,8 @@ def _render_mock_test_setup(backend):
         st.error(str(error))
 
 
-def _set_mock_test_question(index, test_id):
-    st.session_state.mock_test_question_index = index
-    st.session_state[f"mock_test_jump_{test_id}"] = index
-
-
-def _sync_mock_test_question(navigator_key, total_questions):
-    st.session_state.mock_test_question_index = _normalise_question_index(
-        st.session_state.get(navigator_key),
-        total_questions,
-    )
+def _set_mock_test_question(index, navigator_key):
+    st.session_state[navigator_key] = _question_token(index)
 
 
 def _save_mock_test_answer(backend, question_index, options, answer_key):
@@ -207,10 +209,17 @@ def _render_mock_test_question(backend, test, current_index):
 def _render_mock_test_attempt(backend, test):
     total_questions = len(test["questions"])
     test_id = test["id"]
-    current_index = _normalise_question_index(
-        st.session_state.get("mock_test_question_index", 0), total_questions
-    )
-    st.session_state.mock_test_question_index = current_index
+    navigator_key = f"mock_test_jump_{test_id}"
+    navigator_options = [_question_token(index) for index in range(total_questions)]
+    existing_navigator_value = st.session_state.get(navigator_key)
+    if existing_navigator_value not in navigator_options:
+        legacy_index = _index_from_question_token(
+            existing_navigator_value
+            if existing_navigator_value is not None
+            else st.session_state.get("mock_test_question_index", 0),
+            total_questions,
+        )
+        st.session_state[navigator_key] = _question_token(legacy_index)
 
     if not test["submitted"]:
         end_time = st.session_state.get("mock_test_end_time")
@@ -241,22 +250,16 @@ def _render_mock_test_attempt(backend, test):
     if test["submitted"]:
         _render_mock_test_summary(test)
 
-    navigator_key = f"mock_test_jump_{test_id}"
-    if navigator_key not in st.session_state:
-        st.session_state[navigator_key] = current_index
-    st.selectbox(
+    selected_question = st.selectbox(
         "Jump to any question",
-        options=list(range(total_questions)),
-        format_func=lambda index: _question_label(test, index),
+        options=navigator_options,
+        format_func=lambda token: _question_label(
+            test, _index_from_question_token(token, total_questions)
+        ),
         key=navigator_key,
-        on_change=_sync_mock_test_question,
-        args=(navigator_key, total_questions),
         help="Search by question number in this list. The icon shows whether the question is attempted, and after submission whether it is correct.",
     )
-    current_index = _normalise_question_index(
-        st.session_state.get("mock_test_question_index", 0), total_questions
-    )
-    st.session_state.mock_test_question_index = current_index
+    current_index = _index_from_question_token(selected_question, total_questions)
     _render_mock_test_question(backend, test, current_index)
 
     navigation = st.container(horizontal=True)
@@ -264,14 +267,14 @@ def _render_mock_test_attempt(backend, test):
         "Previous question",
         disabled=current_index == 0,
         on_click=_set_mock_test_question,
-        args=(current_index - 1, test_id),
+        args=(current_index - 1, navigator_key),
         key=f"mock_test_previous_{test_id}_{current_index}",
     )
     navigation.button(
         "Next question",
         disabled=current_index == total_questions - 1,
         on_click=_set_mock_test_question,
-        args=(current_index + 1, test_id),
+        args=(current_index + 1, navigator_key),
         key=f"mock_test_next_{test_id}_{current_index}",
     )
 
