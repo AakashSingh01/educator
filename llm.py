@@ -7,6 +7,7 @@ from urllib.request import Request, urlopen
 
 from llm_config import (
     GEMINI_API_KEY,
+    GEMINI_MAX_OUTPUT_TOKENS,
     GEMINI_MODEL,
     GEMINI_TIMEOUT_SECONDS,
     GEMINI_USE_GOOGLE_SEARCH,
@@ -24,7 +25,14 @@ class LLMError(RuntimeError):
 class LLMClient(Protocol):
     """Minimal interface required by the learning and notes backend."""
 
-    def chat(self, prompt, system_prompt=None, history=None):
+    def chat(
+        self,
+        prompt,
+        system_prompt=None,
+        history=None,
+        max_output_tokens=None,
+        use_grounding=None,
+    ):
         """Return a text response for the supplied conversation."""
 
 
@@ -40,7 +48,14 @@ class OllamaListener:
         self.model = model or OLLAMA_MODEL
         self.timeout = timeout
 
-    def chat(self, prompt, system_prompt=None, history=None):
+    def chat(
+        self,
+        prompt,
+        system_prompt=None,
+        history=None,
+        max_output_tokens=None,
+        use_grounding=None,
+    ):
         messages = []
         if system_prompt:
             messages.append({"role": "system", "content": system_prompt})
@@ -53,12 +68,15 @@ class OllamaListener:
             ):
                 messages.append({"role": message["role"], "content": message["content"].strip()})
         messages.append({"role": "user", "content": prompt})
-        payload = json.dumps({
+        payload_data = {
             "model": self.model,
             "messages": messages,
             "stream": False,
             "format": "json",
-        }).encode("utf-8")
+        }
+        if isinstance(max_output_tokens, int) and not isinstance(max_output_tokens, bool):
+            payload_data["options"] = {"num_predict": max(1, max_output_tokens)}
+        payload = json.dumps(payload_data).encode("utf-8")
         request = Request(
             f"{self.host}/api/chat",
             data=payload,
@@ -96,6 +114,7 @@ class GeminiListener:
         model=None,
         timeout=None,
         enable_google_search=None,
+        max_output_tokens=None,
         client=None,
     ):
         self.api_key = api_key if api_key is not None else GEMINI_API_KEY
@@ -103,6 +122,11 @@ class GeminiListener:
         self.timeout = GEMINI_TIMEOUT_SECONDS if timeout is None else timeout
         self.enable_google_search = (
             GEMINI_USE_GOOGLE_SEARCH if enable_google_search is None else enable_google_search
+        )
+        self.max_output_tokens = (
+            GEMINI_MAX_OUTPUT_TOKENS
+            if max_output_tokens is None
+            else max(256, int(max_output_tokens))
         )
         self._client = client
 
@@ -175,8 +199,24 @@ class GeminiListener:
             or "model generated function call(s)" in message
         )
 
-    def chat(self, prompt, system_prompt=None, history=None):
-        tools = [{"type": "google_search"}] if self.enable_google_search else None
+    def chat(
+        self,
+        prompt,
+        system_prompt=None,
+        history=None,
+        max_output_tokens=None,
+        use_grounding=None,
+    ):
+        search_enabled = self.enable_google_search and use_grounding is not False
+        tools = [{"type": "google_search"}] if search_enabled else None
+        try:
+            requested_output_tokens = int(max_output_tokens)
+        except (TypeError, ValueError):
+            requested_output_tokens = self.max_output_tokens
+        output_token_limit = max(
+            256,
+            min(requested_output_tokens, self.max_output_tokens),
+        )
         conversation_input = self._conversation_input(prompt, system_prompt, history)
         if tools:
             conversation_input += (
@@ -188,6 +228,7 @@ class GeminiListener:
             "input": conversation_input,
             # The application expects a JSON response from every provider.
             "response_format": {"type": "text", "mime_type": "application/json"},
+            "generation_config": {"max_output_tokens": output_token_limit},
         }
         if tools:
             request["tools"] = tools
@@ -230,5 +271,6 @@ def create_llm_client(provider=None):
             model=GEMINI_MODEL,
             timeout=GEMINI_TIMEOUT_SECONDS,
             enable_google_search=GEMINI_USE_GOOGLE_SEARCH,
+            max_output_tokens=GEMINI_MAX_OUTPUT_TOKENS,
         )
     raise LLMError("EDUCATOR_LLM_PROVIDER must be either 'ollama' or 'gemini'.")

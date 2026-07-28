@@ -1,13 +1,18 @@
 """Prepared-item learning sessions, answers, and result follow-ups."""
 
-import json
 import random
 import re
 from pathlib import Path
 
 from learning_config import LEARNING_MODE_TYPES, TIMER_PRESETS, get_time_limit
+from llm_config import (
+    LEARNING_ITEM_MAX_OUTPUT_TOKENS,
+    RESULT_FOLLOW_UP_MAX_OUTPUT_TOKENS,
+    SUBJECTIVE_ASSESSMENT_MAX_OUTPUT_TOKENS,
+)
 from prompt_loader import render_prompt
 from question_bank_config import QUESTION_BANK_DIFFICULTIES
+from response_parsing import parse_json_object
 
 from .models import PageType
 
@@ -227,7 +232,14 @@ class LearningSessionMixin:
             thought=thought.strip(),
             follow_up="This is a follow-up item, so make it different from the previous item while staying on the same topic. " if follow_up else "",
         )
-        step = self._parse_generated_step(self.llm.chat(prompt, system_prompt=system_prompt), expected_type)
+        step = self._parse_generated_step(
+            self.llm.chat(
+                prompt,
+                system_prompt=system_prompt,
+                max_output_tokens=LEARNING_ITEM_MAX_OUTPUT_TOKENS,
+            ),
+            expected_type,
+        )
         step["time_limit"] = get_time_limit(self.timer_preset, expected_type)
         self.steps.append(step)
         return len(self.steps) - 1
@@ -258,12 +270,15 @@ class LearningSessionMixin:
             result_context=result_context, question=question.strip(),
         )
         try:
-            response = self.llm.chat(prompt, system_prompt=system_prompt, history=self.ask_history[-4:])
-            response_text = response.strip() if isinstance(response, str) else response
-            if isinstance(response_text, str) and response_text.startswith("```"):
-                response_text = response_text.split("\n", 1)[-1].rsplit("```", 1)[0].strip()
-            answer = json.loads(response_text).get("answer")
-        except (AttributeError, TypeError, json.JSONDecodeError) as error:
+            response = self.llm.chat(
+                prompt,
+                system_prompt=system_prompt,
+                history=self.ask_history[-4:],
+                max_output_tokens=RESULT_FOLLOW_UP_MAX_OUTPUT_TOKENS,
+                use_grounding=False,
+            )
+            answer = parse_json_object(response).get("answer")
+        except ValueError as error:
             raise ValueError("The model did not return a valid answer. Please try again.") from error
         if not isinstance(answer, str) or not answer.strip():
             raise ValueError("The model returned an empty answer. Please try again.")
@@ -298,14 +313,9 @@ class LearningSessionMixin:
     @staticmethod
     def _parse_generated_step(response, expected_type=None):
         try:
-            response_text = response.strip() if isinstance(response, str) else response
-            if isinstance(response_text, str) and response_text.startswith("```"):
-                response_text = response_text.split("\n", 1)[-1].rsplit("```", 1)[0].strip()
-            data = json.loads(response_text)
-        except (TypeError, json.JSONDecodeError) as error:
+            data = parse_json_object(response)
+        except ValueError as error:
             raise ValueError("The model did not return a valid lesson. Please try again.") from error
-        if not isinstance(data, dict):
-            raise ValueError("The model returned an invalid lesson format. Please try again.")
         step_type = {"objective": "mcq", "multiple_choice": "mcq", "short_answer": "subjective"}.get(data.get("type"), data.get("type"))
         if step_type == "theory" and expected_type in (None, "theory"):
             title, content = data.get("title"), data.get("content") or data.get("notes") or data.get("explanation")
@@ -369,8 +379,15 @@ class LearningSessionMixin:
             model_answer=step["sample_answer"], learner_answer=answer.strip(),
         )
         try:
-            result = json.loads(self.llm.chat(prompt, system_prompt=system_prompt))
-        except (TypeError, json.JSONDecodeError) as error:
+            result = parse_json_object(
+                self.llm.chat(
+                    prompt,
+                    system_prompt=system_prompt,
+                    max_output_tokens=SUBJECTIVE_ASSESSMENT_MAX_OUTPUT_TOKENS,
+                    use_grounding=False,
+                )
+            )
+        except ValueError as error:
             raise ValueError("The model could not assess this answer. Please try again.") from error
         score = result.get("score") if isinstance(result, dict) else None
         feedback = result.get("feedback") if isinstance(result, dict) else None

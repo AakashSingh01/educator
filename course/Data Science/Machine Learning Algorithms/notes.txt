@@ -1,30 +1,27 @@
 # Machine Learning Algorithms
 
 ## Overview
-Machine learning algorithms are a type of artificial intelligence (AI) that enable systems to automatically improve their performance on a task without being explicitly programmed.
-They learn from data, identifying patterns and relationships that allow them to make predictions or take actions.
+Machine Learning (ML) algorithms are computational methods that learn mathematical models directly from data. Instead of following explicitly programmed rules, these algorithms identify patterns within data to make predictions, categorize information, or extract hidden structures.
 
-## Core Ideas
-The core ideas behind machine learning algorithms include:
-*   **Supervised Learning**: The algorithm learns from labeled data, where the correct output is already known. Examples include classification and regression tasks.
-*   **Unsupervised Learning**: The algorithm learns from unlabeled data, identifying patterns and relationships without prior knowledge of the correct output. Examples include clustering and dimensionality reduction.
-*   **Reinforcement Learning**: The algorithm learns through trial and error, receiving feedback in the form of rewards or penalties for its actions.
+## Core Learning Paradigms
+- **Supervised Learning**: Learns a mapping function from input features (X) to a target label (y) using labeled training data. Applied in regression (continuous targets) and classification (discrete targets).
+- **Unsupervised Learning**: Discovers inherent patterns, groupings, or distributions in unlabeled data (X) without target guidance (e.g., clustering, dimensionality reduction).
+- **Semi-Supervised Learning**: Leverages a small set of labeled data combined with a large pool of unlabeled data to improve learning efficiency.
+- **Reinforcement Learning**: Trains an agent to make a sequence of decisions by interacting with an environment, receiving feedback as rewards or penalties.
 
-## Terminology
-Key terms in machine learning algorithms:
-*   **Model**: A mathematical representation of the relationships between inputs and outputs.
-*   **Hyperparameter**: A parameter that is set before training a model, such as learning rate or regularization strength.
-*   **Feature**: An input variable used to train a model, such as age or income.
-*   **Bias-Variance Tradeoff**: The tradeoff between the error caused by an overly complex model (bias) and the error caused by an underfitting model (variance).
+## Core Concepts & Terminology
+- **Features (X) & Targets (y)**: Features are input attributes used for learning; targets are the expected output values.
+- **Parameters vs. Hyperparameters**:
+  - *Parameters*: Internal values learned by the algorithm during training (e.g., weights in a model).
+  - *Hyperparameters*: External settings configured manually before training begins (e.g., learning rate, maximum depth).
+- **Loss Function & Optimization**: The loss function measures prediction error. Optimization routines (e.g., gradient descent) iteratively update parameters to minimize this loss.
+- **Bias-Variance Tradeoff**:
+  - *High Bias (Underfitting)*: The model is overly simplistic and fails to capture underlying data trends.
+  - *High Variance (Overfitting)*: The model learns noise in the training set and fails to generalize to new, unseen data.
+- **Parametric vs. Non-Parametric**:
+  - *Parametric*: Assumes a fixed model structure with a predetermined number of parameters.
+  - *Non-Parametric*: Flexible structure where parameter complexity can scale with the amount of data.
 
-## Relationships
-Machine learning algorithms are often classified into three main types:
-*   **Linear Models**: Linear regression, logistic regression, etc.
-*   **Decision Trees**: Classification and regression trees, decision stumps, etc.
-*   **Ensemble Methods**: Bagging, boosting, stacking, etc.
-
-## Example Use Cases
-Machine learning algorithms have a wide range of applications in various fields, including:
-*   **Image Classification**: Self-driving cars, facial recognition, medical image analysis.
-*   **Natural Language Processing**: Sentiment analysis, text classification, machine translation.
-*   **Recommendation Systems**: Product recommendations, personalized advertising, movie suggestions.
+## System Relationships
+- **Inputs**: Relies on clean data provided by Data Preprocessing and Feature Engineering.
+- **Outputs**: Generates trained models evaluated through Model Performance Metrics and integrated into software systems via MLOps.

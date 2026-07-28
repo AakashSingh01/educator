@@ -16,8 +16,14 @@ from question_bank_config import (
     QUESTION_BANK_DIFFICULTIES,
     QUESTION_BANK_FILES,
     QUESTION_BANK_ITEMS_PER_DIFFICULTY,
+    QUESTION_BANK_NOTES_CHAR_LIMIT,
+    QUESTION_BANK_OBJECTIVE_MAX_OUTPUT_TOKENS,
+    QUESTION_BANK_OUTLINE_MAX_OUTPUT_TOKENS,
+    QUESTION_BANK_SUBJECTIVE_MAX_OUTPUT_TOKENS,
+    QUESTION_BANK_THEORY_MAX_OUTPUT_TOKENS,
     QUESTION_BANK_VERSION,
 )
+from response_parsing import parse_json_response
 
 
 class QuestionBankMixin:
@@ -31,16 +37,158 @@ class QuestionBankMixin:
 
     @staticmethod
     def _json_response(response, error_message):
-        text = response.strip() if isinstance(response, str) else response
-        if isinstance(text, str) and text.startswith("```"):
-            text = text.split("\n", 1)[-1].rsplit("```", 1)[0].strip()
         try:
-            data = json.loads(text)
-        except (TypeError, json.JSONDecodeError) as error:
+            data = parse_json_response(response)
+        except ValueError as error:
             raise ValueError(error_message) from error
+        if isinstance(data, list):
+            return {"items": data}
         if not isinstance(data, dict):
             raise ValueError(error_message)
         return data
+
+    @staticmethod
+    def _response_items(data):
+        """Accept common wrappers used by otherwise valid structured responses."""
+
+        if not isinstance(data, dict):
+            return None
+        for key in ("items", "questions", "cards", "results", "data"):
+            value = data.get(key)
+            if isinstance(value, list):
+                return value
+            if isinstance(value, dict):
+                nested = value.get("items")
+                if isinstance(nested, list):
+                    return nested
+        return None
+
+    @staticmethod
+    def _item_field(item, key):
+        aliases = {
+            "question": ("question", "question_text", "stem", "text"),
+            "title": ("title", "heading", "topic", "text"),
+            "answer": ("answer", "model_answer", "sample_answer", "response"),
+            "content": ("content", "description", "explanation", "answer"),
+            "options": ("options", "choices", "answers"),
+            "correct_option": (
+                "correct_option",
+                "correct_answer",
+                "answer_key",
+                "correct",
+                "answer",
+            ),
+            "explanation": ("explanation", "rationale", "answer_explanation"),
+            "reason": ("reason", "distractor_explanation", "incorrect_options_reason"),
+        }
+        if not isinstance(item, dict):
+            return None
+        for alias in aliases.get(key, (key,)):
+            value = item.get(alias)
+            if value is not None:
+                return value
+        return None
+
+    @classmethod
+    def _outline_text(cls, entry, item_type):
+        if isinstance(entry, str):
+            return entry.strip()
+        if not isinstance(entry, dict):
+            return ""
+        preferred_keys = {
+            "subjective": ("question", "text", "title"),
+            "mcq": ("question", "stem", "text"),
+            "theory": ("title", "heading", "text"),
+        }
+        for key in preferred_keys[item_type]:
+            value = entry.get(key)
+            if isinstance(value, str) and value.strip():
+                return value.strip()
+        return ""
+
+    @classmethod
+    def _difficulty_entries(cls, data, difficulty):
+        items = data.get("items")
+        if isinstance(items, list):
+            grouped = [
+                item for item in items
+                if isinstance(item, dict)
+                and cls._normalise_item_text(item.get("difficulty")) == difficulty
+            ]
+            return grouped or None
+        source = items if isinstance(items, dict) else data
+        for key, entries in source.items():
+            if cls._normalise_item_text(key) == difficulty:
+                return entries
+        return None
+
+    @staticmethod
+    def _clean_objective_options(options):
+        if isinstance(options, dict):
+            labelled = [
+                options.get(letter) or options.get(letter.casefold())
+                for letter in ("A", "B", "C", "D")
+            ]
+            options = labelled if all(labelled) else list(options.values())
+        if isinstance(options, list):
+            cleaned = []
+            for option in options:
+                if isinstance(option, dict):
+                    option = (
+                        option.get("text")
+                        or option.get("option")
+                        or option.get("value")
+                    )
+                if not isinstance(option, str) or not option.strip():
+                    return None
+                cleaned.append(option.strip())
+            if len(cleaned) == 4 and len({item.casefold() for item in cleaned}) == 4:
+                return cleaned
+        return None
+
+    @classmethod
+    def _resolve_correct_option(cls, correct, options):
+        if isinstance(correct, int) and not isinstance(correct, bool):
+            if correct == 0:
+                return options[0]
+            if 1 <= correct <= len(options):
+                return options[correct - 1]
+            return None
+        if not isinstance(correct, str) or not correct.strip():
+            return None
+
+        value = correct.strip()
+        option_map = {option.casefold(): option for option in options}
+        if value.casefold() in option_map:
+            return option_map[value.casefold()]
+
+        label_match = re.match(
+            r"^(?:option|answer)?\s*([A-D])(?:\s*[\).:\-]\s*|\s*$)",
+            value,
+            flags=re.IGNORECASE,
+        )
+        if label_match:
+            return options[ord(label_match.group(1).upper()) - ord("A")]
+        if value in {"1", "2", "3", "4"}:
+            return options[int(value) - 1]
+        numbered_match = re.match(
+            r"^(?:option|answer)?\s*([1-4])(?:\s*[\).:\-]\s*|\s*$)",
+            value,
+            flags=re.IGNORECASE,
+        )
+        if numbered_match:
+            return options[int(numbered_match.group(1)) - 1]
+
+        def without_label(text):
+            return re.sub(
+                r"^(?:option\s*)?[A-D]\s*[\).:\-]\s*",
+                "",
+                text,
+                flags=re.IGNORECASE,
+            ).strip().casefold()
+
+        unlabelled_options = {without_label(option): option for option in options}
+        return unlabelled_options.get(without_label(value))
 
     def _retry_preparation_output(self, create, error_message):
         last_error = None
@@ -134,29 +282,35 @@ class QuestionBankMixin:
                 "question_bank_outlines",
                 subject=subject,
                 topic_label=topic_label,
-                notes=notes[:12000],
+                notes=notes[:QUESTION_BANK_NOTES_CHAR_LIMIT],
                 total_items=total_items,
                 description=descriptions[item_type],
                 items_per_difficulty=items_per_difficulty,
                 outline_schema=outline_schema,
             )
             data = self._json_response(
-                self.llm.chat(prompt, system_prompt=system_prompt),
+                self.llm.chat(
+                    prompt,
+                    system_prompt=system_prompt,
+                    max_output_tokens=QUESTION_BANK_OUTLINE_MAX_OUTPUT_TOKENS,
+                    use_grounding=False,
+                ),
                 "The model did not return valid distinct item outlines.",
             )
             cleaned = {}
             seen = set()
             for difficulty in QUESTION_BANK_DIFFICULTIES:
-                entries = data.get(difficulty) or data.get(difficulty.title())
+                entries = self._difficulty_entries(data, difficulty)
                 if not isinstance(entries, list) or len(entries) != items_per_difficulty:
                     raise ValueError("The model did not return all requested outlines.")
                 values = []
                 for entry in entries:
-                    normalised = self._normalise_item_text(entry)
+                    value = self._outline_text(entry, item_type)
+                    normalised = self._normalise_item_text(value)
                     if not normalised or normalised in seen:
                         raise ValueError("The model returned duplicate or empty outlines.")
                     seen.add(normalised)
-                    values.append(entry.strip())
+                    values.append(value)
                 cleaned[difficulty] = values
             return cleaned
 
@@ -168,16 +322,26 @@ class QuestionBankMixin:
                 "question_bank_subjective_answers",
                 subject=subject,
                 topic_label=subject if not relative_topic else f"{subject} / {relative_topic}",
-                notes=notes[:12000],
+                notes=notes[:QUESTION_BANK_NOTES_CHAR_LIMIT],
                 difficulty=difficulty.title(),
                 item_count=len(questions),
                 questions=json.dumps(questions, ensure_ascii=False),
             )
             data = self._json_response(
-                self.llm.chat(prompt, system_prompt=system_prompt),
+                self.llm.chat(
+                    prompt,
+                    system_prompt=system_prompt,
+                    max_output_tokens=QUESTION_BANK_SUBJECTIVE_MAX_OUTPUT_TOKENS,
+                    use_grounding=False,
+                ),
                 "The model did not return valid subjective answers.",
             )
-            return self._match_batch_items(data.get("items"), questions, "question", ("answer",))
+            return self._match_batch_items(
+                self._response_items(data),
+                questions,
+                "question",
+                ("answer",),
+            )
 
         return self._retry_preparation_output(create, "The model could not prepare all subjective answers. Please run it again.")
 
@@ -187,33 +351,33 @@ class QuestionBankMixin:
                 "question_bank_objective_answers",
                 subject=subject,
                 topic_label=subject if not relative_topic else f"{subject} / {relative_topic}",
-                notes=notes[:12000],
+                notes=notes[:QUESTION_BANK_NOTES_CHAR_LIMIT],
                 difficulty=difficulty.title(),
                 item_count=len(questions),
                 questions=json.dumps(questions, ensure_ascii=False),
             )
             data = self._json_response(
-                self.llm.chat(prompt, system_prompt=system_prompt),
+                self.llm.chat(
+                    prompt,
+                    system_prompt=system_prompt,
+                    max_output_tokens=QUESTION_BANK_OBJECTIVE_MAX_OUTPUT_TOKENS,
+                    use_grounding=False,
+                ),
                 "The model did not return valid objective answers.",
             )
             items = self._match_batch_items(
-                data.get("items"), questions, "question", ("options", "correct_option", "explanation", "reason")
+                self._response_items(data),
+                questions,
+                "question",
+                ("options", "correct_option", "explanation", "reason"),
             )
             for item in items:
-                options = item["options"]
-                if (
-                    not isinstance(options, list) or len(options) != 4
-                    or not all(isinstance(option, str) and option.strip() for option in options)
-                    or len({option.strip().casefold() for option in options}) != 4
-                ):
+                options = self._clean_objective_options(item["options"])
+                if options is None:
                     raise ValueError("The model returned invalid objective options.")
-                item["options"] = [option.strip() for option in options]
-                correct = item["correct_option"].strip() if isinstance(item["correct_option"], str) else ""
-                if correct.upper() in {"A", "B", "C", "D"}:
-                    correct = item["options"][ord(correct.upper()) - ord("A")]
-                option_map = {option.casefold(): option for option in item["options"]}
-                correct = option_map.get(correct.casefold(), correct)
-                if correct not in item["options"]:
+                item["options"] = options
+                correct = self._resolve_correct_option(item["correct_option"], options)
+                if correct is None:
                     raise ValueError("The model returned an objective answer outside its options.")
                 item["correct_option"] = correct
             return items
@@ -226,16 +390,26 @@ class QuestionBankMixin:
                 "question_bank_theory_cards",
                 subject=subject,
                 topic_label=subject if not relative_topic else f"{subject} / {relative_topic}",
-                notes=notes[:12000],
+                notes=notes[:QUESTION_BANK_NOTES_CHAR_LIMIT],
                 difficulty=difficulty.title(),
                 item_count=len(titles),
                 titles=json.dumps(titles, ensure_ascii=False),
             )
             data = self._json_response(
-                self.llm.chat(prompt, system_prompt=system_prompt),
+                self.llm.chat(
+                    prompt,
+                    system_prompt=system_prompt,
+                    max_output_tokens=QUESTION_BANK_THEORY_MAX_OUTPUT_TOKENS,
+                    use_grounding=False,
+                ),
                 "The model did not return valid theory cards.",
             )
-            return self._match_batch_items(data.get("items"), titles, "title", ("content",))
+            return self._match_batch_items(
+                self._response_items(data),
+                titles,
+                "title",
+                ("content",),
+            )
 
         return self._retry_preparation_output(create, "The model could not prepare all theory cards. Please run it again.")
 
@@ -247,22 +421,38 @@ class QuestionBankMixin:
         for item in items:
             if not isinstance(item, dict):
                 raise ValueError("The model returned an invalid batch item.")
-            item_key = self._normalise_item_text(item.get(text_key))
-            if item_key not in expected or item_key in matched:
-                raise ValueError("The model did not preserve the requested item text.")
-            cleaned = {text_key: expected[item_key]}
+            item_key = self._normalise_item_text(self._item_field(item, text_key))
+            if item_key in expected and item_key not in matched:
+                matched[item_key] = item
+
+        if set(matched) == set(expected):
+            ordered_items = [
+                matched[self._normalise_item_text(text)]
+                for text in requested_texts
+            ]
+        else:
+            # Gemini sometimes adds numbering or lightly rewrites the repeated
+            # question/title. Preserve the original text and match by the
+            # requested order instead of paying for another identical batch.
+            ordered_items = items
+
+        cleaned_items = []
+        for requested_text, item in zip(requested_texts, ordered_items):
+            cleaned = {text_key: requested_text}
             for required_key in required_keys:
-                value = item.get(required_key)
+                value = self._item_field(item, required_key)
+                if required_key == "options":
+                    cleaned[required_key] = value
+                    continue
+                if required_key == "reason" and (
+                    not isinstance(value, str) or not value.strip()
+                ):
+                    value = self._item_field(item, "explanation")
                 if not isinstance(value, str) or not value.strip():
-                    if required_key == "options":
-                        cleaned[required_key] = value
-                        continue
                     raise ValueError("The model returned an incomplete batch item.")
                 cleaned[required_key] = value.strip()
-            matched[item_key] = cleaned
-        if set(matched) != set(expected):
-            raise ValueError("The model did not answer every requested item.")
-        return [matched[self._normalise_item_text(text)] for text in requested_texts]
+            cleaned_items.append(cleaned)
+        return cleaned_items
 
     def prepare_topic_question_bank(self, subject, relative_topic="", overwrite=False):
         folder = self._topic_folder(subject, relative_topic)

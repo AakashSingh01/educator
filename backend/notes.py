@@ -4,7 +4,13 @@ import json
 import shutil
 from pathlib import Path
 
+from llm_config import (
+    NOTES_CONTEXT_CHAR_LIMIT,
+    NOTES_MAX_OUTPUT_TOKENS,
+    SUBTOPIC_SUGGESTIONS_MAX_OUTPUT_TOKENS,
+)
 from prompt_loader import render_prompt
+from response_parsing import parse_json_object
 
 
 class NotesPreparationMixin:
@@ -174,10 +180,15 @@ class NotesPreparationMixin:
             topic_label=topic["label"],
             instruction=instruction.strip() if isinstance(instruction, str) and instruction.strip() else "None",
         )
-        response = self.llm.chat(prompt, system_prompt=system_prompt)
+        response = self.llm.chat(
+            prompt,
+            system_prompt=system_prompt,
+            max_output_tokens=NOTES_MAX_OUTPUT_TOKENS,
+            use_grounding=False,
+        )
         try:
-            notes = json.loads(response).get("notes")
-        except (AttributeError, TypeError, json.JSONDecodeError) as error:
+            notes = parse_json_object(response).get("notes")
+        except ValueError as error:
             raise ValueError("The model did not return valid notes. Please try again.") from error
         if not isinstance(notes, str) or not notes.strip():
             raise ValueError("The model returned empty notes. Please try again.")
@@ -201,13 +212,18 @@ class NotesPreparationMixin:
             "subtopic_suggestions",
             subject=subject,
             topic_label=topic["label"],
-            notes=topic["notes"],
+            notes=topic["notes"][:NOTES_CONTEXT_CHAR_LIMIT],
             instruction=instruction.strip() if isinstance(instruction, str) and instruction.strip() else "None",
         )
-        response = self.llm.chat(prompt, system_prompt=system_prompt)
+        response = self.llm.chat(
+            prompt,
+            system_prompt=system_prompt,
+            max_output_tokens=SUBTOPIC_SUGGESTIONS_MAX_OUTPUT_TOKENS,
+            use_grounding=False,
+        )
         try:
-            subtopics = json.loads(response).get("subtopics")
-        except (AttributeError, TypeError, json.JSONDecodeError) as error:
+            subtopics = parse_json_object(response).get("subtopics")
+        except ValueError as error:
             raise ValueError("The model did not return valid subtopics. Please try again.") from error
         if not isinstance(subtopics, list):
             raise ValueError("The model returned invalid subtopics. Please try again.")

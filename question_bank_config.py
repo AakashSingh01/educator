@@ -23,4 +23,14 @@ QUESTION_BANK_FILES = {
 
 # Used automatically for independent topic folders; this is intentionally not a UI setting.
 PREPARATION_WORKERS = 4
-PREPARATION_OUTPUT_ATTEMPTS = 2
+# A malformed response is handled by tolerant parsing. Do not pay for the same
+# request twice before moving to the existing 15/12/9/6 fallback.
+PREPARATION_OUTPUT_ATTEMPTS = 1
+
+# Repeatedly sending very long notes is the largest input-token cost during a
+# preparation run. These limits keep each of the four calls per item type small.
+QUESTION_BANK_NOTES_CHAR_LIMIT = 6000
+QUESTION_BANK_OUTLINE_MAX_OUTPUT_TOKENS = 1800
+QUESTION_BANK_SUBJECTIVE_MAX_OUTPUT_TOKENS = 2000
+QUESTION_BANK_OBJECTIVE_MAX_OUTPUT_TOKENS = 3600
+QUESTION_BANK_THEORY_MAX_OUTPUT_TOKENS = 2600
