@@ -5,7 +5,8 @@ read from the environment so an API key is never stored with the project.
 """
 
 import os
-from pathlib import Path
+
+from app_config import load_project_env
 
 
 def _integer_setting(name, default, minimum=1, maximum=None):
@@ -19,23 +20,7 @@ def _integer_setting(name, default, minimum=1, maximum=None):
     return min(value, maximum) if maximum is not None else value
 
 
-def _load_project_env():
-    """Load simple KEY=VALUE settings from the project-local .env file."""
-
-    env_path = Path(__file__).with_name(".env")
-    if not env_path.is_file():
-        return
-    for raw_line in env_path.read_text(encoding="utf-8").splitlines():
-        line = raw_line.strip()
-        if not line or line.startswith("#") or "=" not in line:
-            continue
-        key, value = line.split("=", 1)
-        key = key.strip()
-        if key and key.replace("_", "").isalnum():
-            os.environ.setdefault(key, value.strip().strip("'\""))
-
-
-_load_project_env()
+load_project_env()
 
 
 OLLAMA_HOST = os.getenv("OLLAMA_HOST", "http://127.0.0.1:11434")

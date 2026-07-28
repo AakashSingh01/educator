@@ -2,6 +2,7 @@
 
 from pathlib import Path
 
+from app_config import get_course_path
 from llm import LLMClient, create_llm_client
 
 from .learning import LearningSessionMixin
@@ -14,8 +15,7 @@ class LearningBackend(NotesPreparationMixin, QuestionBankMixin, LearningSessionM
     """Backend facade used by Streamlit and worker processes."""
 
     def __init__(self, course_path=None, llm_client=None):
-        project_path = Path(__file__).resolve().parent.parent
-        self.course_path = project_path / "course" if course_path is None else Path(course_path)
+        self.course_path = get_course_path() if course_path is None else Path(course_path).expanduser().resolve()
         self.llm: LLMClient = llm_client or create_llm_client()
         self.score = 0
         self.events = []
