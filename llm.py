@@ -85,6 +85,11 @@ class GeminiError(LLMError):
 class GeminiListener:
     """Use Gemini with its managed Google Search grounding tool when enabled."""
 
+    _TOOL_LIMIT_RETRY_NOTICE = (
+        "The previous grounded attempt failed because the model generated too many "
+        "tool calls. Complete the original task directly without calling any tools."
+    )
+
     def __init__(
         self,
         api_key=None,
@@ -162,11 +167,25 @@ class GeminiListener:
             return "\n".join(fragments)
         raise GeminiError("Gemini returned an empty response.")
 
+    @staticmethod
+    def _is_tool_call_limit_error(error):
+        message = str(error).casefold()
+        return (
+            "too many tool calls" in message
+            or "model generated function call(s)" in message
+        )
+
     def chat(self, prompt, system_prompt=None, history=None):
         tools = [{"type": "google_search"}] if self.enable_google_search else None
+        conversation_input = self._conversation_input(prompt, system_prompt, history)
+        if tools:
+            conversation_input += (
+                "\n\nTool-use limit: Use Google Search only when necessary and make "
+                "at most one search call. Then return the requested JSON response."
+            )
         request = {
             "model": self.model,
-            "input": self._conversation_input(prompt, system_prompt, history),
+            "input": conversation_input,
             # The application expects a JSON response from every provider.
             "response_format": {"type": "text", "mime_type": "application/json"},
         }
@@ -178,7 +197,20 @@ class GeminiListener:
         except GeminiError:
             raise
         except Exception as error:
-            raise GeminiError(f"Gemini could not complete the request: {error}") from error
+            if not tools or not self._is_tool_call_limit_error(error):
+                raise GeminiError(f"Gemini could not complete the request: {error}") from error
+            retry_request = dict(request)
+            retry_request.pop("tools", None)
+            retry_request["input"] = (
+                f"{conversation_input}\n\nRetry notice: {self._TOOL_LIMIT_RETRY_NOTICE}"
+            )
+            try:
+                result = self._get_client().interactions.create(**retry_request)
+            except Exception as retry_error:
+                raise GeminiError(
+                    f"Gemini could not complete the request after retrying without "
+                    f"Google Search: {retry_error}"
+                ) from retry_error
         return self._response_text(result)
 
 
