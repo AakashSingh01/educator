@@ -6,14 +6,22 @@ from response_parsing import parse_json_response
 
 class QuestionBankResponseTests(unittest.TestCase):
     def test_repairs_unescaped_latex_commands_in_json(self):
-        response = r'{"question":"Find $\theta$ from $\frac{1}{2}$."}'
+        response = r'{"question":"Find $\theta$, $\frac{1}{2}$, and $50\% \mod 3$."}'
 
         parsed = parse_json_response(response)
 
         self.assertEqual(
             parsed["question"],
-            r"Find $\theta$ from $\frac{1}{2}$.",
+            r"Find $\theta$, $\frac{1}{2}$, and $50\% \mod 3$.",
         )
+
+    def test_preserves_normal_json_escapes(self):
+        response = '{"content":"first line\\nsecond line","symbol":"\\u03c0"}'
+
+        parsed = parse_json_response(response)
+
+        self.assertEqual(parsed["content"], "first line\nsecond line")
+        self.assertEqual(parsed["symbol"], "π")
 
     def test_accepts_named_difficulty_wrappers(self):
         response = {

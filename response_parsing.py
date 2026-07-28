@@ -9,22 +9,60 @@ _FENCED_BLOCK = re.compile(
     flags=re.IGNORECASE | re.DOTALL,
 )
 _TRAILING_COMMA = re.compile(r",\s*([}\]])")
-_UNESCAPED_LATEX_COMMAND = re.compile(
-    r"(?<!\\)\\(?=(?:"
-    r"alpha|beta|gamma|delta|epsilon|theta|lambda|mu|pi|rho|sigma|phi|omega|"
-    r"frac|dfrac|tfrac|sqrt|sum|prod|int|lim|infty|partial|nabla|"
-    r"sin|cos|tan|cot|sec|csc|log|ln|exp|"
-    r"cdot|times|div|pm|mp|leq?|geq?|neq|approx|equiv|"
-    r"begin|end|left|right|text|mathrm|mathbf|mathbb|mathcal|operatorname|"
-    r"overline|underline|hat|bar|vec"
-    r")\b)"
-)
+_LATEX_COMMANDS_COLLIDING_WITH_JSON_ESCAPES = {
+    "bar", "begin", "beta", "boxed", "mathbf",
+    "frac",
+    "nabla", "neq", "not", "nu",
+    "rho", "right", "rightarrow", "rfloor", "mathrm",
+    "tan", "text", "tfrac", "theta", "therefore", "times",
+}
+def _repair_json_string_backslashes(candidate):
+    """Escape raw LaTeX backslashes without altering JSON syntax."""
 
+    repaired = []
+    inside_string = False
+    index = 0
+    while index < len(candidate):
+        character = candidate[index]
+        if character == '"':
+            preceding = 0
+            cursor = index - 1
+            while cursor >= 0 and candidate[cursor] == "\\":
+                preceding += 1
+                cursor -= 1
+            if preceding % 2 == 0:
+                inside_string = not inside_string
+            repaired.append(character)
+            index += 1
+            continue
+        if character != "\\" or not inside_string:
+            repaired.append(character)
+            index += 1
+            continue
 
-def _repair_latex_backslashes(candidate):
-    """Escape common raw LaTeX commands inside otherwise valid JSON strings."""
-
-    return _UNESCAPED_LATEX_COMMAND.sub(r"\\\\", candidate)
+        following = candidate[index + 1:index + 2]
+        if not following:
+            repaired.append("\\\\")
+            index += 1
+            continue
+        if following == "\\" or following in {'"', "/"}:
+            repaired.extend((character, following))
+            index += 2
+            continue
+        if following == "u" and re.match(r"^[0-9a-fA-F]{4}$", candidate[index + 2:index + 6]):
+            repaired.append(character)
+            index += 1
+            continue
+        if following in {"b", "f", "n", "r", "t"}:
+            command_match = re.match(r"[A-Za-z]+", candidate[index + 1:])
+            command = command_match.group(0) if command_match else following
+            if command not in _LATEX_COMMANDS_COLLIDING_WITH_JSON_ESCAPES:
+                repaired.append(character)
+                index += 1
+                continue
+        repaired.append("\\\\")
+        index += 1
+    return "".join(repaired)
 
 
 def _decode_json_candidate(candidate):
@@ -32,7 +70,7 @@ def _decode_json_candidate(candidate):
     if not candidate:
         raise json.JSONDecodeError("Empty response", candidate, 0)
 
-    repaired = _repair_latex_backslashes(candidate)
+    repaired = _repair_json_string_backslashes(candidate)
     versions = tuple(dict.fromkeys((
         repaired,
         _TRAILING_COMMA.sub(r"\1", repaired),

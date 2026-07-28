@@ -205,7 +205,8 @@ class QuestionBankMixin:
                 return create()
             except ValueError as error:
                 last_error = error
-        raise ValueError(error_message) from last_error
+        detail = str(last_error) if last_error else "No usable response was returned."
+        raise ValueError(f"{error_message} Last response issue: {detail}") from last_error
 
     def _question_bank_path(self, folder, item_type, difficulty):
         return folder / QUESTION_BANK_FILES[item_type][difficulty]
@@ -429,8 +430,9 @@ class QuestionBankMixin:
         return self._retry_preparation_output(create, "The model could not prepare all theory cards. Please run it again.")
 
     def _match_batch_items(self, items, requested_texts, text_key, required_keys):
-        if not isinstance(items, list) or len(items) != len(requested_texts):
+        if not isinstance(items, list) or len(items) < len(requested_texts):
             raise ValueError("The model did not return the requested batch.")
+        items = items[:len(requested_texts)]
         expected = {self._normalise_item_text(text): text for text in requested_texts}
         matched = {}
         for item in items:

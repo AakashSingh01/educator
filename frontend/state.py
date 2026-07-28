@@ -4,6 +4,7 @@ import streamlit as st
 
 from backend import LearningBackend
 from learning_config import QUESTION_MODE_TYPES
+from llm_logging import LoggedLLMClient
 
 
 DEFAULTS = {
@@ -32,6 +33,8 @@ def initialize_session():
         st.session_state.setdefault(key, value)
     if "backend" not in st.session_state:
         st.session_state.backend = LearningBackend()
+    elif not isinstance(st.session_state.backend.llm, LoggedLLMClient):
+        st.session_state.backend.llm = LoggedLLMClient(st.session_state.backend.llm)
     return st.session_state.backend
 
 

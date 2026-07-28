@@ -7,3 +7,6 @@
 __pycache__/
 *.py[cod]
 *$py.class
+
+# Local model request/response logs
+logs/

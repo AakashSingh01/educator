@@ -5,6 +5,7 @@ from typing import Protocol
 from urllib.error import HTTPError, URLError
 from urllib.request import Request, urlopen
 
+from llm_logging import LoggedLLMClient
 from llm_config import (
     GEMINI_API_KEY,
     GEMINI_MAX_OUTPUT_TOKENS,
@@ -260,17 +261,19 @@ def create_llm_client(provider=None):
 
     selected_provider = (provider or LLM_PROVIDER).strip().casefold()
     if selected_provider == "ollama":
-        return OllamaListener(
+        client = OllamaListener(
             host=OLLAMA_HOST,
             model=OLLAMA_MODEL,
             timeout=OLLAMA_TIMEOUT_SECONDS,
         )
-    if selected_provider == "gemini":
-        return GeminiListener(
+    elif selected_provider == "gemini":
+        client = GeminiListener(
             api_key=GEMINI_API_KEY,
             model=GEMINI_MODEL,
             timeout=GEMINI_TIMEOUT_SECONDS,
             enable_google_search=GEMINI_USE_GOOGLE_SEARCH,
             max_output_tokens=GEMINI_MAX_OUTPUT_TOKENS,
         )
-    raise LLMError("EDUCATOR_LLM_PROVIDER must be either 'ollama' or 'gemini'.")
+    else:
+        raise LLMError("EDUCATOR_LLM_PROVIDER must be either 'ollama' or 'gemini'.")
+    return LoggedLLMClient(client)
