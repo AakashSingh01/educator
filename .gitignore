@@ -2,3 +2,8 @@
 .env
 .env.*
 !.env.example
+
+# Python bytecode and interpreter caches
+__pycache__/
+*.py[cod]
+*$py.class

@@ -1,6 +1,8 @@
 """Mock-test configuration, navigation, timing, and review screens."""
 
+import hashlib
 import time
+from pathlib import Path
 
 import streamlit as st
 
@@ -44,49 +46,211 @@ def _return_to_learning_home(backend):
     st.session_state.mock_test_question_index = 0
     st.session_state.mock_test_end_time = None
     st.session_state.mock_test_timed_out = False
+    st.session_state.mock_test_scope_requests = []
     st.rerun()
+
+
+def _scope_label(subject, scope):
+    return subject if not scope else f"{subject} / {scope}"
+
+
+def _scope_key(subject, scope):
+    """Return a stable, short key for widgets associated with a topic tree."""
+
+    value = f"{subject}\0{scope}".encode("utf-8")
+    return hashlib.sha1(value).hexdigest()[:12]
+
+
+def _scopes_overlap(first_scope, second_scope):
+    if not first_scope or not second_scope:
+        return True
+    first_path, second_path = Path(first_scope), Path(second_scope)
+    return (
+        first_path == second_path
+        or first_path in second_path.parents
+        or second_path in first_path.parents
+    )
+
+
+def _mock_test_scope_requests():
+    """Read only valid selections so stale widget data cannot break setup."""
+
+    requests = st.session_state.setdefault("mock_test_scope_requests", [])
+    return [
+        {"subject": item["subject"], "scope": item.get("scope", "")}
+        for item in requests
+        if isinstance(item, dict)
+        and isinstance(item.get("subject"), str)
+        and isinstance(item.get("scope", ""), str)
+    ]
+
+
+def _add_mock_test_scope(subject, scope):
+    requests = _mock_test_scope_requests()
+    if any(
+        item["subject"] == subject and _scopes_overlap(item["scope"], scope)
+        for item in requests
+    ):
+        return
+    st.session_state.mock_test_scope_requests = requests + [{"subject": subject, "scope": scope}]
+
+
+def _remove_mock_test_scope(subject, scope):
+    st.session_state.mock_test_scope_requests = [
+        item for item in _mock_test_scope_requests()
+        if item["subject"] != subject or item["scope"] != scope
+    ]
+
+
+def _has_overlapping_mock_test_scope(requests, subject, scope):
+    return any(
+        item["subject"] == subject and _scopes_overlap(item["scope"], scope)
+        for item in requests
+    )
+
+
+def _render_mock_test_scope_picker(backend, requests):
+    """Browse a compact topic tree and add one independent test boundary."""
+
+    subjects = backend.get_categories()
+    if not subjects:
+        st.warning("No subject folders are available yet.")
+        return
+
+    st.subheader("Add an area")
+    subject = st.selectbox(
+        "Subject",
+        options=subjects,
+        key="mock_test_scope_subject",
+        help="Browse one subject at a time, then add either the full subject or the current topic subtree.",
+    )
+    browse_key = f"mock_test_browse_scope_{_scope_key(subject, '')}"
+    st.session_state.setdefault(browse_key, "")
+    selected_scope = st.session_state[browse_key]
+    if selected_scope not in backend.get_learning_scopes(subject):
+        st.session_state[browse_key] = ""
+        selected_scope = ""
+
+    st.caption(
+        f"Browsing: {_scope_label(subject, selected_scope)}"
+        + (" and all of its subtopics" if not selected_scope else " and its descendant subtopics")
+    )
+    controls = st.columns(2)
+    if controls[0].button("Use full subject", key=f"mock_test_scope_root_{_scope_key(subject, '')}"):
+        st.session_state[browse_key] = ""
+        st.rerun()
+    if controls[1].button(
+        "Go up one level",
+        key=f"mock_test_scope_up_{_scope_key(subject, selected_scope)}",
+        disabled=not selected_scope,
+    ):
+        st.session_state[browse_key] = selected_scope.rsplit("/", 1)[0] if "/" in selected_scope else ""
+        st.rerun()
+
+    direct_subtopics = backend.get_direct_learning_subtopics(subject, selected_scope)
+    if direct_subtopics:
+        topic_filter = st.text_input(
+            "Filter direct subtopics",
+            placeholder="Type to narrow the list",
+            key=f"mock_test_scope_filter_{_scope_key(subject, selected_scope)}",
+        ).casefold()
+        visible = [topic for topic in direct_subtopics if topic_filter in topic.casefold()][:20]
+        if visible:
+            next_topic = st.selectbox(
+                "Direct subtopic",
+                options=visible,
+                key=f"mock_test_scope_child_{_scope_key(subject, selected_scope)}",
+            )
+            if st.button(
+                "Open subtopic",
+                key=f"mock_test_scope_open_{_scope_key(subject, selected_scope)}",
+            ):
+                st.session_state[browse_key] = (
+                    f"{selected_scope}/{next_topic}" if selected_scope else next_topic
+                )
+                st.rerun()
+        else:
+            st.info("No direct subtopics match that filter.")
+
+    capacity = backend.get_mock_test_capacity(subject, selected_scope)
+    overlap = _has_overlapping_mock_test_scope(requests, subject, selected_scope)
+    st.caption(f"{capacity} prepared objective question(s) are available in this area.")
+    if overlap:
+        st.info("This area overlaps an area already selected. Remove the broader or narrower selection first.")
+    if not capacity:
+        st.info("Prepare objective questions for this area before adding it to a mock test.")
+    st.button(
+        "Add full subject" if not selected_scope else "Add current topic and subtopics",
+        key=f"mock_test_add_scope_{_scope_key(subject, selected_scope)}",
+        disabled=not capacity or overlap,
+        on_click=_add_mock_test_scope,
+        args=(subject, selected_scope),
+    )
 
 
 def _render_mock_test_setup(backend):
     st.title("Mock test")
-    st.caption("Build a timed objective test from your prepared question banks. Answers remain editable until final submission.")
+    st.caption("Build a timed objective test from prepared question banks. Add full subjects, topics, or subtopics from any subjects; every selected area includes its descendants.")
     if st.button("← Back to learning", key="mock_test_back"):
         _return_to_learning_home(backend)
 
-    subjects = st.multiselect(
-        "Subjects to include",
-        options=backend.get_categories(),
-        key="mock_test_subjects",
-        placeholder="Choose one or more subjects",
-        help="Each selected subject contributes the exact number of prepared objective questions you choose below.",
-    )
-    if not subjects:
-        st.info("Choose at least one subject to configure the test.")
+    requests = _mock_test_scope_requests()
+    _render_mock_test_scope_picker(backend, requests)
+    requests = _mock_test_scope_requests()
+    st.subheader("Selected areas")
+    if not requests:
+        st.info("Add at least one full subject, topic, or subtopic to configure the test.")
         return
 
-    capacities = {subject: backend.get_mock_test_capacity(subject) for subject in subjects}
-    unavailable = [subject for subject, capacity in capacities.items() if not capacity]
+    capacities = {}
+    unavailable = []
+    for request in requests:
+        label = _scope_label(request["subject"], request["scope"])
+        capacity = backend.get_mock_test_capacity(request["subject"], request["scope"])
+        capacities[label] = capacity
+        if not capacity:
+            unavailable.append(label)
+
+    for request in requests:
+        subject, scope = request["subject"], request["scope"]
+        label = _scope_label(subject, scope)
+        row = st.container(horizontal=True, vertical_alignment="center")
+        row.write(f"**{label}** · {capacities[label]} prepared objective question(s)")
+        row.button(
+            "Remove",
+            key=f"mock_test_remove_scope_{_scope_key(subject, scope)}",
+            on_click=_remove_mock_test_scope,
+            args=(subject, scope),
+        )
+
     if unavailable:
         st.warning(
-            "No prepared objective questions are available for: " + ", ".join(unavailable) + ". "
-            "Run Question Preparation for those subjects first."
+            "No prepared objective questions are currently available for: "
+            + ", ".join(unavailable)
+            + ". Run Question Preparation for those areas first."
         )
 
     with st.form("mock_test_configuration"):
-        st.subheader("Questions by subject")
-        subject_counts = {}
-        for subject in subjects:
-            capacity = capacities[subject]
+        st.subheader("Questions by selected area")
+        scope_requests = []
+        for request in requests:
+            subject, scope = request["subject"], request["scope"]
+            label = _scope_label(subject, scope)
+            capacity = capacities[label]
             if not capacity:
                 continue
-            subject_counts[subject] = st.number_input(
-                f"{subject} questions (up to {capacity})",
-                min_value=1,
-                max_value=capacity,
-                value=min(10, capacity),
-                step=1,
-                key=f"mock_test_count_{subject}",
-            )
+            scope_requests.append({
+                "subject": subject,
+                "scope": scope,
+                "count": st.number_input(
+                    f"{label} questions (up to {capacity})",
+                    min_value=1,
+                    max_value=capacity,
+                    value=min(10, capacity),
+                    step=1,
+                    key=f"mock_test_count_{_scope_key(subject, scope)}",
+                ),
+            })
 
         st.subheader("Timing and marks")
         timing, correct, incorrect = st.columns(3)
@@ -120,7 +284,7 @@ def _render_mock_test_setup(backend):
         return
     try:
         test = backend.create_mock_test(
-            subject_counts,
+            scope_requests,
             duration_minutes,
             correct_marks,
             incorrect_marks,
