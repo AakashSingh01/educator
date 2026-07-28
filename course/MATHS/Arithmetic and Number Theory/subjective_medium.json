@@ -1,0 +1,28 @@
+{
+  "version": 1,
+  "type": "subjective",
+  "difficulty": "medium",
+  "subject": "MATHS",
+  "topic": "Arithmetic and Number Theory",
+  "notes_hash": "802535c20224d499833103843ad6c1bd0364f8eec45427d3b541e45abcfd042f",
+  "items_per_difficulty": 4,
+  "generated_at": "2026-07-28T17:30:58.070390+00:00",
+  "items": [
+    {
+      "question": "How is the product of two positive integers $a$ and $b$ mathematically related to their $\\gcd(a, b)$ and $\\operatorname{lcm}(a, b)$?",
+      "answer": "The product of two positive integers $a$ and $b$ is equal to the product of their greatest common divisor and least common multiple. Mathematically, this relationship is expressed as $a \\cdot b = \\gcd(a, b) \\times \\operatorname{lcm}(a, b)$."
+    },
+    {
+      "question": "How is the modular congruence statement $a \\equiv b \\pmod{m}$ defined using integer divisibility?",
+      "answer": "The statement $a \\equiv b \\pmod{m}$ is defined as $m \\mid (a - b)$. This means that the modulus $m$ divides the difference between $a$ and $b$ with no remainder."
+    },
+    {
+      "question": "What name is given to an equation, such as $ax + by = c$, that specifically requires integer solutions?",
+      "answer": "An equation that specifically requires integer solutions is called a Diophantine equation."
+    },
+    {
+      "question": "How does a composite number $n > 1$ differ from a prime number in terms of its positive divisors?",
+      "answer": "A prime number $p > 1$ has exactly two positive divisors: $1$ and itself. In contrast, a composite number $n > 1$ has at least one positive divisor other than $1$ and itself."
+    }
+  ]
+}

@@ -1,0 +1,33 @@
+# Arithmetic and Number Theory
+
+## Overview
+**Arithmetic** is the fundamental branch of mathematics concerning basic operations on numbers (addition, subtraction, multiplication, and division). **Number Theory** extends these concepts to study the properties, relationships, and structures of integers ($\mathbb{Z}$) and natural numbers ($\mathbb{N}$).
+
+## Core Concepts
+
+### 1. Divisibility and Prime Numbers
+An integer $a$ divides an integer $b$ (written as $a \mid b$) if there exists an integer $k$ such that $b = a \cdot k$.
+* **Prime Number:** An integer $p > 1$ whose only positive divisors are $1$ and $p$.
+* **Composite Number:** An integer $n > 1$ that has positive divisors other than $1$ and itself.
+* **Fundamental Theorem of Arithmetic:** Every integer $n > 1$ can be represented as a unique product of prime numbers, up to the order of factors:
+$$n = p_1^{e_1} p_2^{e_2} \cdots p_k^{e_k}$$
+
+### 2. GCD and LCM
+* **Greatest Common Divisor (GCD):** The largest positive integer that divides two or more integers, written as $\gcd(a, b)$.
+* **Least Common Multiple (LCM):** The smallest positive integer divisible by two or more integers, written as $\operatorname{lcm}(a, b)$.
+* **Relationship:** For any two positive integers $a$ and $b$:
+$$\gcd(a, b) \times \operatorname{lcm}(a, b) = a \cdot b$$
+
+### 3. Modular Arithmetic
+A system of arithmetic for integers where numbers "wrap around" upon reaching a fixed quantity called the **modulus** $m$.
+* **Congruence:** Two integers $a$ and $b$ are congruent modulo $m$ if their difference $a - b$ is an integer multiple of $m$:
+$$a \equiv b \pmod{m} \iff m \mid (a - b)$$
+
+## Key Terminology
+* **Division Algorithm:** For any integer $a$ and positive integer $b$, there exist unique integers $q$ (quotient) and $r$ (remainder) such that $a = bq + r$ where $0 \le r < b$.
+* **Coprime (Relatively Prime):** Integers $a$ and $b$ are coprime if $\gcd(a, b) = 1$.
+* **Diophantine Equation:** An equation requiring integer solutions (e.g., $ax + by = c$).
+
+## Relationships and Applications
+* **Abstract Algebra:** Number theory motivates structural algebra, introducing algebraic structures like groups, rings (e.g., $\mathbb{Z}/m\mathbb{Z}$), and fields.
+* **Computer Science & Cryptography:** Provides the structural foundation for algorithms, pseudo-random number generation, and modern encryption systems like RSA.

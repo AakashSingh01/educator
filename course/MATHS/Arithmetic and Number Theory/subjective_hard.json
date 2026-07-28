@@ -1,0 +1,28 @@
+{
+  "version": 1,
+  "type": "subjective",
+  "difficulty": "hard",
+  "subject": "MATHS",
+  "topic": "Arithmetic and Number Theory",
+  "notes_hash": "802535c20224d499833103843ad6c1bd0364f8eec45427d3b541e45abcfd042f",
+  "items_per_difficulty": 4,
+  "generated_at": "2026-07-28T17:30:58.070703+00:00",
+  "items": [
+    {
+      "question": "If the least common multiple of two positive integers $a$ and $b$ equals their product ($\\operatorname{lcm}(a, b) = a \\cdot b$), what does this imply about their greatest common divisor $\\gcd(a, b)$ and their relationship?",
+      "answer": "Using the relationship $\\gcd(a, b) \\times \\operatorname{lcm}(a, b) = a \\cdot b$, if $\\operatorname{lcm}(a, b) = a \\cdot b$, it directly implies that $\\gcd(a, b) = 1$. This means that $a$ and $b$ are coprime (relatively prime) and share no common prime factors."
+    },
+    {
+      "question": "In terms of the Division Algorithm parameters ($a = bq + r$), what specific value must the remainder $r$ hold if $b \\mid a$?",
+      "answer": "If $b \\mid a$, the remainder $r$ must be exactly $0$. Under the Division Algorithm ($a = bq + r$ with $0 \\le r < b$), $r = 0$ indicates that $a$ is an exact integer multiple of $b$."
+    },
+    {
+      "question": "How does modular arithmetic contribute to abstract algebra in terms of structural algebraic sets?",
+      "answer": "Modular arithmetic partitions the integers into congruence classes modulo $m$. These sets form foundational algebraic structures, such as quotient groups and residue class rings ($\\mathbb{Z}/m\\mathbb{Z}$), which become finite fields when $m$ is prime."
+    },
+    {
+      "question": "Explain how Number Theory forms the structural foundation for modern computer science applications such as cryptography.",
+      "answer": "Number Theory supplies core mathematical concepts like prime numbers, modular arithmetic, and integer factorization. Modern public-key cryptosystems, such as RSA, rely on these concepts and the computational hardness of underlying number-theoretic problems to secure digital communications."
+    }
+  ]
+}

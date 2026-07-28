@@ -9,6 +9,22 @@ _FENCED_BLOCK = re.compile(
     flags=re.IGNORECASE | re.DOTALL,
 )
 _TRAILING_COMMA = re.compile(r",\s*([}\]])")
+_UNESCAPED_LATEX_COMMAND = re.compile(
+    r"(?<!\\)\\(?=(?:"
+    r"alpha|beta|gamma|delta|epsilon|theta|lambda|mu|pi|rho|sigma|phi|omega|"
+    r"frac|dfrac|tfrac|sqrt|sum|prod|int|lim|infty|partial|nabla|"
+    r"sin|cos|tan|cot|sec|csc|log|ln|exp|"
+    r"cdot|times|div|pm|mp|leq?|geq?|neq|approx|equiv|"
+    r"begin|end|left|right|text|mathrm|mathbf|mathbb|mathcal|operatorname|"
+    r"overline|underline|hat|bar|vec"
+    r")\b)"
+)
+
+
+def _repair_latex_backslashes(candidate):
+    """Escape common raw LaTeX commands inside otherwise valid JSON strings."""
+
+    return _UNESCAPED_LATEX_COMMAND.sub(r"\\\\", candidate)
 
 
 def _decode_json_candidate(candidate):
@@ -16,7 +32,13 @@ def _decode_json_candidate(candidate):
     if not candidate:
         raise json.JSONDecodeError("Empty response", candidate, 0)
 
-    versions = (candidate, _TRAILING_COMMA.sub(r"\1", candidate))
+    repaired = _repair_latex_backslashes(candidate)
+    versions = tuple(dict.fromkeys((
+        repaired,
+        _TRAILING_COMMA.sub(r"\1", repaired),
+        candidate,
+        _TRAILING_COMMA.sub(r"\1", candidate),
+    )))
     for text in versions:
         try:
             value = json.loads(text)

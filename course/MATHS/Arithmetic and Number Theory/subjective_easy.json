@@ -1,0 +1,28 @@
+{
+  "version": 1,
+  "type": "subjective",
+  "difficulty": "easy",
+  "subject": "MATHS",
+  "topic": "Arithmetic and Number Theory",
+  "notes_hash": "802535c20224d499833103843ad6c1bd0364f8eec45427d3b541e45abcfd042f",
+  "items_per_difficulty": 4,
+  "generated_at": "2026-07-28T17:30:58.069540+00:00",
+  "items": [
+    {
+      "question": "What condition must an integer $p > 1$ satisfy to be classified as a prime number?",
+      "answer": "An integer $p > 1$ is classified as a prime number if its only positive divisors are $1$ and $p$."
+    },
+    {
+      "question": "State the Fundamental Theorem of Arithmetic regarding the prime factorization of an integer $n > 1$.",
+      "answer": "The Fundamental Theorem of Arithmetic states that every integer $n > 1$ can be represented as a unique product of prime numbers, up to the order of factors: $n = p_1^{e_1} p_2^{e_2} \\cdots p_k^{e_k}$."
+    },
+    {
+      "question": "What condition defines two integers $a$ and $b$ as being coprime?",
+      "answer": "Two integers $a$ and $b$ are coprime (or relatively prime) if their greatest common divisor is $1$, written as $\\gcd(a, b) = 1$."
+    },
+    {
+      "question": "According to the Division Algorithm, what is the exact range of conditions required for the remainder $r$ when dividing integer $a$ by positive integer $b$?",
+      "answer": "According to the Division Algorithm, the remainder $r$ must be a non-negative integer strictly less than $b$, satisfying the condition $0 \\le r < b$."
+    }
+  ]
+}

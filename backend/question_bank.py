@@ -108,17 +108,25 @@ class QuestionBankMixin:
 
     @classmethod
     def _difficulty_entries(cls, data, difficulty):
-        items = data.get("items")
+        items = None
+        for wrapper in ("items", "questions", "cards", "results", "data"):
+            candidate = data.get(wrapper)
+            if isinstance(candidate, (list, dict)):
+                items = candidate
+                break
         if isinstance(items, list):
-            grouped = [
-                item for item in items
-                if isinstance(item, dict)
-                and cls._normalise_item_text(item.get("difficulty")) == difficulty
-            ]
+            grouped = []
+            for item in items:
+                if not isinstance(item, dict):
+                    continue
+                label = cls._normalise_item_text(item.get("difficulty"))
+                if label == difficulty or label.startswith(f"{difficulty} "):
+                    grouped.append(item)
             return grouped or None
         source = items if isinstance(items, dict) else data
         for key, entries in source.items():
-            if cls._normalise_item_text(key) == difficulty:
+            label = cls._normalise_item_text(key)
+            if label == difficulty or label.startswith(f"{difficulty} "):
                 return entries
         return None
 
@@ -301,16 +309,23 @@ class QuestionBankMixin:
             seen = set()
             for difficulty in QUESTION_BANK_DIFFICULTIES:
                 entries = self._difficulty_entries(data, difficulty)
-                if not isinstance(entries, list) or len(entries) != items_per_difficulty:
+                if not isinstance(entries, list):
                     raise ValueError("The model did not return all requested outlines.")
                 values = []
                 for entry in entries:
                     value = self._outline_text(entry, item_type)
                     normalised = self._normalise_item_text(value)
                     if not normalised or normalised in seen:
-                        raise ValueError("The model returned duplicate or empty outlines.")
+                        continue
                     seen.add(normalised)
                     values.append(value)
+                    if len(values) == items_per_difficulty:
+                        break
+                if len(values) != items_per_difficulty:
+                    raise ValueError(
+                        f"The model returned only {len(values)} usable "
+                        f"{difficulty} outline(s); {items_per_difficulty} were requested."
+                    )
                 cleaned[difficulty] = values
             return cleaned
 
@@ -495,7 +510,11 @@ class QuestionBankMixin:
                 except ValueError as error:
                     last_error = error
             if completed_items is None:
-                raise ValueError(f"The model could not create enough distinct {item_type} items for this topic, even at six items.") from last_error
+                detail = str(last_error) if last_error else "No usable model response was returned."
+                raise ValueError(
+                    f"The model could not complete the minimum six {item_type} items "
+                    f"for this topic. Last response issue: {detail}"
+                ) from last_error
             for difficulty, items in completed_items.items():
                 self._write_question_bank(folder, item_type, difficulty, subject, relative_topic, notes_hash, items, completed_item_count)
                 generated_files += 1
