@@ -1,0 +1,34 @@
+{
+  "completed": [
+    "",
+    "Machine Learning Algorithms",
+    "Deep Learning in Data Science",
+    "Deep Learning in Data Science/Convolutional Neural Networks (CNNs) in Image Analysis"
+  ],
+  "max_depth": 10,
+  "queue": [
+    "Machine Learning Algorithms",
+    "",
+    "Deep Learning in Data Science/Convolutional Neural Networks (CNNs) in Image Analysis",
+    "Deep Learning in Data Science/Convolutional Neural Networks (CNNs) in Image Analysis/Dropout Regularization in CNNs",
+    "Deep Learning in Data Science/Convolutional Neural Networks (CNNs) in Image Analysis/Activation Functions",
+    "Deep Learning in Data Science/Convolutional Neural Networks (CNNs) in Image Analysis/Batch Normalization in CNNs",
+    "Deep Learning in Data Science/Convolutional Neural Networks (CNNs) in Image Analysis/CNN Architectures for Object Detection",
+    "Deep Learning in Data Science/Convolutional Neural Networks (CNNs) in Image Analysis/Image Classification with CNNs",
+    "Deep Learning in Data Science/Convolutional Neural Networks (CNNs) in Image Analysis/Advantages and Disadvantages of Using CNNs in Data Science",
+    "Deep Learning in Data Science/Transfer Learning in Deep Learning",
+    "Deep Learning in Data Science/Supervised Learning with Artificial Neural Networks (ANNs)",
+    "Machine Learning Algorithms/Linear Regression Models",
+    "Machine Learning Algorithms/Ensemble Method Applications",
+    "Machine Learning Algorithms/Reinforcement Learning Algorithms",
+    "Big Data Analytics",
+    "Data Visualization Techniques",
+    "Statistical Modeling Methods",
+    "Data Mining Applications",
+    "Text Analysis in Data Science",
+    "Data Storytelling",
+    "Machine Learning Algorithms/Supervised Learning Techniques",
+    "Machine Learning Algorithms/Unsupervised Learning Methods",
+    "Machine Learning Algorithms/Decision Tree Classification"
+  ]
+}

@@ -1,0 +1,27 @@
+# Machine Learning Algorithms
+
+## Overview
+Machine Learning (ML) algorithms are computational methods that learn mathematical models directly from data. Instead of following explicitly programmed rules, these algorithms identify patterns within data to make predictions, categorize information, or extract hidden structures.
+
+## Core Learning Paradigms
+- **Supervised Learning**: Learns a mapping function from input features (X) to a target label (y) using labeled training data. Applied in regression (continuous targets) and classification (discrete targets).
+- **Unsupervised Learning**: Discovers inherent patterns, groupings, or distributions in unlabeled data (X) without target guidance (e.g., clustering, dimensionality reduction).
+- **Semi-Supervised Learning**: Leverages a small set of labeled data combined with a large pool of unlabeled data to improve learning efficiency.
+- **Reinforcement Learning**: Trains an agent to make a sequence of decisions by interacting with an environment, receiving feedback as rewards or penalties.
+
+## Core Concepts & Terminology
+- **Features (X) & Targets (y)**: Features are input attributes used for learning; targets are the expected output values.
+- **Parameters vs. Hyperparameters**:
+  - *Parameters*: Internal values learned by the algorithm during training (e.g., weights in a model).
+  - *Hyperparameters*: External settings configured manually before training begins (e.g., learning rate, maximum depth).
+- **Loss Function & Optimization**: The loss function measures prediction error. Optimization routines (e.g., gradient descent) iteratively update parameters to minimize this loss.
+- **Bias-Variance Tradeoff**:
+  - *High Bias (Underfitting)*: The model is overly simplistic and fails to capture underlying data trends.
+  - *High Variance (Overfitting)*: The model learns noise in the training set and fails to generalize to new, unseen data.
+- **Parametric vs. Non-Parametric**:
+  - *Parametric*: Assumes a fixed model structure with a predetermined number of parameters.
+  - *Non-Parametric*: Flexible structure where parameter complexity can scale with the amount of data.
+
+## System Relationships
+- **Inputs**: Relies on clean data provided by Data Preprocessing and Feature Engineering.
+- **Outputs**: Generates trained models evaluated through Model Performance Metrics and integrated into software systems via MLOps.

@@ -1,0 +1,71 @@
+{
+  "version": 1,
+  "type": "mcq",
+  "difficulty": "hard",
+  "subject": "Data Science",
+  "topic": "Deep Learning in Data Science",
+  "notes_hash": "059da4dd160a27ecc9939e323e195264072a3f87120828df3fe7fe2ff299b845",
+  "generated_at": "2026-07-26T10:17:48.417676+00:00",
+  "items": [
+    {
+      "question": "How do artificial neural networks (ANNs) process inputs to produce outputs?",
+      "options": [
+        "By using a single neuron to calculate the output.",
+        "By summing all input values to get an average output.",
+        "Through convolutional and pooling layers in CNNs to extract features.",
+        "By multiplying all input values to get a product output."
+      ],
+      "correct_option": "Through convolutional and pooling layers in CNNs to extract features.",
+      "explanation": "Convolutional and pooling layers in CNNs are used to extract features from data, which enables the network to process inputs and produce outputs.",
+      "reason": "The other options are incorrect because ANNs use complex calculations involving multiple neurons, not simple arithmetic operations like summing or multiplying input values."
+    },
+    {
+      "question": "What is the relationship between deep learning and human brain structure?",
+      "options": [
+        "Deep learning is a type of machine learning that uses data to train models.",
+        "Deep learning is inspired by the human brain's ability to recognize patterns.",
+        "Deep learning is a subset of artificial intelligence that focuses on neural networks.",
+        "Deep learning is similar to human brain function in terms of how it learns and adapts."
+      ],
+      "correct_option": "Deep learning is a type of machine learning that uses data to train models.",
+      "explanation": "Deep learning is a type of machine learning that uses data to train models, which is inspired by the human brain's ability to recognize patterns in data, but not directly related to its overall structure or function.",
+      "reason": "The other options are too broad or incorrect because deep learning is specifically designed for neural networks, not all of AI, and while it is inspired by brain function, it doesn't replicate its structure."
+    },
+    {
+      "question": "Can unsupervised learning be used for image classification?",
+      "options": [
+        "Yes, unsupervised learning can be used for image classification.",
+        "No, unsupervised learning is only used for clustering data.",
+        "Unsupervised learning can be used for image classification, but with some limitations.",
+        "Unsupervised learning may help with feature extraction, but not directly classify images."
+      ],
+      "correct_option": "No, unsupervised learning is only used for clustering data.",
+      "explanation": "Unsupervised learning cannot be used for image classification as it requires labeled data to train models to predict specific outputs, whereas image classification typically uses supervised learning.",
+      "reason": "The other options are incorrect because while unsupervised learning can help with feature extraction, it doesn't directly classify images without additional training or supervision."
+    },
+    {
+      "question": "How does convolutional pooling in CNNs relate to feature extraction?",
+      "options": [
+        "Convolutional and pooling layers extract features from small regions of the image.",
+        "Convolutional and pooling layers are used for image classification tasks only.",
+        "Convolutional and pooling layers help to reduce the spatial dimensions of the input data.",
+        "Convolutional and pooling layers enable the network to process inputs at multiple scales simultaneously."
+      ],
+      "correct_option": "Convolutional and pooling layers enable the network to process inputs at multiple scales simultaneously.",
+      "explanation": "Convolutional and pooling layers in CNNs enable the network to process inputs at multiple scales simultaneously by reducing the spatial dimensions, which helps in feature extraction from smaller regions of the image.",
+      "reason": "The other options are incorrect because convolutional and pooling layers serve more specific purposes than just extracting features or being limited to certain tasks."
+    },
+    {
+      "question": "In reinforcement learning, what is the goal of an agent's actions?",
+      "options": [
+        "To maximize rewards over time.",
+        "To minimize penalties for actions taken.",
+        "To classify images as belonging to certain categories.",
+        "To optimize a complex objective function."
+      ],
+      "correct_option": "To maximize rewards over time.",
+      "explanation": "The primary goal in reinforcement learning is to maximize rewards over time by selecting actions that lead to better outcomes, not necessarily minimizing penalties or optimizing complex objectives.",
+      "reason": "The other options are incorrect because while penalties may be part of the learning process, maximizing rewards and optimizing objectives are more common goals in RL."
+    }
+  ]
+}

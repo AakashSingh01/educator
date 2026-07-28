@@ -1,0 +1,31 @@
+{
+  "version": 1,
+  "type": "subjective",
+  "difficulty": "easy",
+  "subject": "Data Science",
+  "topic": "",
+  "notes_hash": "2236da2ca0fde47fce5e6e1a67b0c34036eec66fe368721e218f19a50e379178",
+  "generated_at": "2026-07-26T10:05:17.859076+00:00",
+  "items": [
+    {
+      "question": "Data science involves using which scientific method to extract insights from data?",
+      "answer": "Scientific method"
+    },
+    {
+      "question": "Which process is used to discover patterns and relationships in large datasets?",
+      "answer": "Data Mining"
+    },
+    {
+      "question": "What term describes a type of artificial intelligence that enables systems to learn from data without being explicitly programmed?",
+      "answer": "Machine Learning"
+    },
+    {
+      "question": "The development of computer systems able to perform tasks requiring human-like intelligence is known as",
+      "answer": "Artificial Intelligence (AI)"
+    },
+    {
+      "question": "Why is big data difficult to process and analyze using traditional methods?",
+      "answer": "Because it is large"
+    }
+  ]
+}

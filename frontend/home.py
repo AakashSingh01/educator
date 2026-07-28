@@ -18,8 +18,21 @@ def render_home(backend):
     if not categories:
         st.info("No subjects found. Add subject folders inside the course directory.")
         return
-    columns = st.columns(len(categories))
-    for column, category in zip(columns, categories):
-        if column.button(category, key=f"category_{category}"):
-            st.session_state.setup_subject = category
+
+    with st.container(border=True):
+        selected_subject = st.selectbox(
+            "Choose a subject",
+            categories,
+            index=None,
+            placeholder="Search or select a subject",
+            key="home_subject",
+        )
+        if st.button(
+            "Continue to learning setup",
+            key="open_learning_setup",
+            type="primary",
+            disabled=selected_subject is None,
+            width="stretch",
+        ):
+            st.session_state.setup_subject = selected_subject
             st.rerun()

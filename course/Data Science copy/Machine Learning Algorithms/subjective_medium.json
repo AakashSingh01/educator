@@ -1,0 +1,31 @@
+{
+  "version": 1,
+  "type": "subjective",
+  "difficulty": "medium",
+  "subject": "Data Science",
+  "topic": "Machine Learning Algorithms",
+  "notes_hash": "6a60ea218d27f294873ed0cf016d341c01a742d147454410ba336794173c4f83",
+  "generated_at": "2026-07-26T10:05:42.750873+00:00",
+  "items": [
+    {
+      "question": "How do ensemble methods improve model performance?",
+      "answer": "Ensemble methods combine multiple models to improve overall performance by reducing overfitting, increasing robustness, and enhancing feature representation."
+    },
+    {
+      "question": "What are some real-world applications of decision trees?",
+      "answer": "Decision trees have applications in image classification, sentiment analysis, credit risk assessment, and medical diagnosis."
+    },
+    {
+      "question": "Can you explain the bias-variance tradeoff?",
+      "answer": "The bias-variance tradeoff refers to the balance between model complexity and simplicity, where overfitting (high bias) can lead to poor performance on unseen data and underfitting (low variance) can result in failure to capture important patterns."
+    },
+    {
+      "question": "How does feature selection impact machine learning models?",
+      "answer": "Feature selection improves model performance by reducing dimensionality, increasing interpretability, and minimizing the risk of overfitting to irrelevant features."
+    },
+    {
+      "question": "What is the difference between a model and a hyperparameter?",
+      "answer": "A model represents the underlying relationships between inputs and outputs, while a hyperparameter is a learned parameter that controls the learning process, such as the learning rate or regularization strength."
+    }
+  ]
+}

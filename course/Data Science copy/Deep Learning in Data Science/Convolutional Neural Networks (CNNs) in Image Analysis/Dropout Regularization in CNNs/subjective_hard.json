@@ -1,0 +1,32 @@
+{
+  "version": 1,
+  "type": "subjective",
+  "difficulty": "hard",
+  "subject": "Data Science",
+  "topic": "Deep Learning in Data Science/Convolutional Neural Networks (CNNs) in Image Analysis/Dropout Regularization in CNNs",
+  "notes_hash": "3806803180ae42b7d23d45a366706800e700e10fe40228877bc8cf776027f382",
+  "items_per_difficulty": 5,
+  "generated_at": "2026-07-26T10:59:18.628036+00:00",
+  "items": [
+    {
+      "question": "Can you derive the optimal dropout rate for a given CNN architecture?",
+      "answer": "The optimal dropout rate depends on the specific CNN architecture, dataset, and task. It is typically determined through hyperparameter tuning and may require domain expertise."
+    },
+    {
+      "question": "How does dropout regularization interplay with other regularization techniques such as weight decay?",
+      "answer": "Dropout regularization works by randomly dropping out neurons during training, whereas weight decay adds a penalty term to the loss function to discourage large weights. Combining both can lead to improved generalization and robustness."
+    },
+    {
+      "question": "Can you explain why dropout regularization may not always lead to improved model generalization?",
+      "answer": "If dropout is too high or if it is not sufficient, models may still overfit to the training data, especially for small datasets or noisy data. Additionally, high dropout rates can reduce the capacity of the network."
+    },
+    {
+      "question": "What are some theoretical limits on the effectiveness of dropout regularization in preventing overfitting?",
+      "answer": "Theoretically, dropout regularization should work as long as the dropout rate is below 1. However, in practice, the optimal dropout rate may be higher or lower depending on the specific task and dataset."
+    },
+    {
+      "question": "Can you compare the performance of different dropout regularization strategies (e.g. stochastic dropout, deterministic dropout)?",
+      "answer": "Stochastic dropout introduces randomness during training, which can lead to faster convergence but may also increase the risk of overfitting. Deterministic dropout, on the other hand, ensures that the same neurons are dropped out each time, which can be beneficial for tasks where the input distribution is non-stationary."
+    }
+  ]
+}

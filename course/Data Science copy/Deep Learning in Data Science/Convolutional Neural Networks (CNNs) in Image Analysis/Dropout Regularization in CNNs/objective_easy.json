@@ -1,0 +1,71 @@
+{
+  "version": 1,
+  "type": "mcq",
+  "difficulty": "easy",
+  "subject": "Data Science",
+  "topic": "Deep Learning in Data Science/Convolutional Neural Networks (CNNs) in Image Analysis/Dropout Regularization in CNNs",
+  "notes_hash": "3806803180ae42b7d23d45a366706800e700e10fe40228877bc8cf776027f382",
+  "generated_at": "2026-07-26T09:50:03.017308+00:00",
+  "items": [
+    {
+      "question": "What is the primary purpose of dropout regularization in CNNs?",
+      "options": [
+        "To increase the robustness of models to noise in the data",
+        "To prevent overfitting by introducing pseudo-recession",
+        "To improve the generalization of models",
+        "To decrease the training speed of models"
+      ],
+      "correct_option": "To improve the generalization of models",
+      "explanation": "Dropout regularization is primarily used to prevent overfitting in CNNs by introducing pseudo-recession, which helps the model learn multiple representations of the data.",
+      "reason": "The other options are not entirely incorrect, but they do not capture the primary purpose of dropout regularization."
+    },
+    {
+      "question": "How does dropout regularization prevent overfitting?",
+      "options": [
+        "By reducing the capacity of the model",
+        "By introducing pseudo-recession into the model",
+        "By increasing the noise in the training data",
+        "By decreasing the training speed of the model"
+      ],
+      "correct_option": "By introducing pseudo-recession into the model",
+      "explanation": "Dropout regularization prevents overfitting by introducing pseudo-recession into the model, which forces it to learn multiple representations of the data and can help prevent misclassification on unseen data.",
+      "reason": "The other options do not accurately describe how dropout regularization prevents overfitting."
+    },
+    {
+      "question": "What is pseudo-recession in the context of dropout regularization?",
+      "options": [
+        "When a single neuron is dropped out simultaneously",
+        "When multiple neurons are dropped out at the same time",
+        "When no neurons are dropped out during training",
+        "When all neurons are dropped out during testing"
+      ],
+      "correct_option": "When multiple neurons are dropped out at the same time",
+      "explanation": "Pseudo-recession occurs when multiple neurons are dropped out simultaneously, creating an environment where some inputs can be misclassified with a single neuron being 'zeroed-out'.",
+      "reason": "The other options do not accurately describe pseudo-recession."
+    },
+    {
+      "question": "Can dropout regularization be used for both training and testing?",
+      "options": [
+        "Yes, but only with a different dropout rate",
+        "No, it should always be used with the same dropout rate",
+        "Yes, with no changes to the dropout rate",
+        "No, it can never be used for both training and testing"
+      ],
+      "correct_option": "Yes, with no changes to the dropout rate",
+      "explanation": "Dropout regularization can be used for both training and testing, but the dropout rate is typically adjusted during training to prevent overfitting.",
+      "reason": "The other options are not entirely accurate."
+    },
+    {
+      "question": "What is the main advantage of using dropout regularization over other regularization techniques?",
+      "options": [
+        "It reduces the capacity of the model",
+        "It increases the noise in the training data",
+        "It improves generalization and robustness",
+        "It decreases the training speed of models"
+      ],
+      "correct_option": "It decreases the training speed of models",
+      "explanation": "The main advantage of using dropout regularization is that it can improve generalization and robustness, making it a popular choice for preventing overfitting in CNNs.",
+      "reason": "The other options do not accurately describe the advantages of dropout regularization."
+    }
+  ]
+}

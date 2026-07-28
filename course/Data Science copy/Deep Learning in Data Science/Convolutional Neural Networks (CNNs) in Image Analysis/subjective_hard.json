@@ -1,0 +1,31 @@
+{
+  "version": 1,
+  "type": "subjective",
+  "difficulty": "hard",
+  "subject": "Data Science",
+  "topic": "Deep Learning in Data Science/Convolutional Neural Networks (CNNs) in Image Analysis",
+  "notes_hash": "548180e166a511777d662f29857c35954c52ccac078a04cf56874928c41e90bf",
+  "generated_at": "2026-07-26T10:15:28.757818+00:00",
+  "items": [
+    {
+      "question": "Compare and contrast the hybrid architecture of CNN-RNN with traditional CNN architectures.",
+      "answer": "The hybrid architecture of CNN-RNN combines the strengths of both, offering improved performance on sequential data compared to traditional CNNs. CNN-RNN uses a convolutional neural network followed by a recurrent neural network to capture both spatial and temporal dependencies."
+    },
+    {
+      "question": "How do Recurrent Neural Networks (RNNs) contribute to the success of CNNs?",
+      "answer": "RNNs enable CNNs to handle sequential data by adding a temporal dimension, allowing them to model complex patterns in time series data or video frames."
+    },
+    {
+      "question": "Explain the concept of spatial hierarchies in convolutional neural networks.",
+      "answer": "Spatial hierarchies refer to the hierarchical organization of features extracted from images using convolutional layers. Each layer extracts more abstract features, and the output is fed into the next layer, resulting in a representation of the input image."
+    },
+    {
+      "question": "Can you describe a scenario where CNN is not suitable for image analysis?",
+      "answer": "CNNs are not ideal for real-time object detection or tracking due to their computational requirements and inability to process video frames in real-time."
+    },
+    {
+      "question": "What are some limitations and potential biases associated with using pre-trained CNN models?",
+      "answer": "Pre-trained CNN models can suffer from overfitting, biased towards the original dataset, and failure to generalize well on new data. Additionally, they require large amounts of computational resources for training and may not perform well on out-of-distribution data."
+    }
+  ]
+}

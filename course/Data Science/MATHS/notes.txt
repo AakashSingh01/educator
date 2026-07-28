@@ -1,0 +1,30 @@
+# Mathematics: Overview and Foundations
+
+## Overview
+**Mathematics** is the formal study of numbers, quantities, structures, space, patterns, and change. It serves as a universal language for logical reasoning, quantitative analysis, and modeling real-world and abstract phenomena across science, engineering, economics, and technology.
+
+## Core Branches
+Mathematics is broadly categorized into pure and applied domains:
+
+* **Pure Mathematics**: Focuses on abstract concepts and logical coherence for their own sake.
+  * *Arithmetic & Number Theory*: Properties and operations of numbers.
+  * *Algebra*: Symbols, rules for manipulation, and abstract mathematical structures.
+  * *Geometry & Topology*: Properties of shape, size, space, and continuous deformation.
+  * *Analysis & Calculus*: Study of continuous change, limits, functions, and infinite processes.
+
+* **Applied Mathematics**: Utilizes mathematical tools to solve practical problems in empirical disciplines.
+  * *Statistics & Probability*: Quantification of uncertainty, data analysis, and inferential modeling.
+  * *Discrete Mathematics*: Finite structures, logic, and graph theory foundational to computer science.
+  * *Applied Analysis & Modeling*: Differential equations and computational methods used in physical sciences and engineering.
+
+## Essential Terminology
+* **Axiom (Postulate)**: A foundational proposition assumed to be true without proof, serving as the starting point for logical deduction.
+* **Theorem**: A mathematical statement that has been definitively proven true using logical arguments derived from axioms and previously established theorems.
+* **Proof**: A rigorous, step-by-step logical argument demonstrating the truth of a mathematical assertion.
+* **Variable & Constant**: A *variable* represents an unknown or changing quantity; a *constant* is a fixed value.
+* **Function**: A rule or mapping that assigns each input element from a set (domain) to exactly one output element in a set (codomain).
+
+## Foundational Relationships & Principles
+* **Deductive Logic**: Truth in mathematics relies on formal deductive reasoning rather than empirical observation.
+* **Abstraction and Generalization**: Concrete problems are reduced to generalized patterns, allowing a single mathematical tool to solve diverse problems across different fields.
+* **Interconnectedness**: Mathematical subfields continuously overlap; for example, *Analytic Geometry* bridges algebra and geometry, while *Calculus* combines algebraic operations with geometric concepts to measure change.

@@ -1,0 +1,31 @@
+{
+  "version": 1,
+  "type": "subjective",
+  "difficulty": "medium",
+  "subject": "Data Science",
+  "topic": ".",
+  "notes_hash": "2236da2ca0fde47fce5e6e1a67b0c34036eec66fe368721e218f19a50e379178",
+  "generated_at": "2026-07-26T09:48:33.022905+00:00",
+  "items": [
+    {
+      "question": "What is the purpose of deployment in the data science life cycle?",
+      "answer": "Deployment in the data science life cycle involves implementing solutions and models into production environments, enabling them to be used in real-world scenarios and generating business value."
+    },
+    {
+      "question": "How do you define data preparation in the context of data science?",
+      "answer": "Data preparation in data science refers to the process of cleaning, transforming, and formatting data for analysis, ensuring it is accurate, consistent, and suitable for use with statistical and machine learning models."
+    },
+    {
+      "question": "What are some common applications of big data in data science?",
+      "answer": "Common applications of big data in data science include analyzing large customer datasets to improve marketing strategies, monitoring website traffic and behavior patterns, and identifying trends in social media activity."
+    },
+    {
+      "question": "How can machine learning be used to improve decision-making in business?",
+      "answer": "Machine learning can be used to improve decision-making in business by enabling systems to analyze large datasets, identify patterns, and make predictions, allowing for data-driven insights and informed decisions."
+    },
+    {
+      "question": "Why is continuous monitoring important in data science?",
+      "answer": "Continuous monitoring is essential in data science as it allows for the ongoing evaluation of model performance, detection of changes in data distributions, and updating of solutions to ensure they remain accurate and effective over time."
+    }
+  ]
+}

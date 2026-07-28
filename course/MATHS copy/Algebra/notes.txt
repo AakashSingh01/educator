@@ -1,0 +1,25 @@
+# Algebra: Overview
+Algebra is a foundational branch of mathematics that uses symbols—typically letters such as $x$, $y$, and $z$—to represent numbers, quantities, and mathematical relationships. Rather than working solely with fixed numbers as in arithmetic, algebra generalizes numerical operations to solve problems involving unknown or varying values.
+
+## Core Ideas
+
+* **Generalization of Arithmetic:** Uses variables to state universal rules (e.g., $a + b = b + a$) that apply to any numbers.
+* **Equivalence and Balance:** Equations express a balance between two quantities. Performing identical operations on both sides preserves this equality.
+* **Unknowns and Solutions:** Replaces unknown values with symbols to isolate and calculate them using inverse operations.
+* **Functional Relationships:** Connects input variables to output variables, establishing rules for how quantities change relative to one another.
+
+## Key Terminology
+
+* **Variable:** A symbol representing an unknown or changing value (e.g., $x$ in $x + 2$).
+* **Constant:** A fixed numerical value that does not change (e.g., $7$, $\pi$).
+* **Term:** A single number, variable, or product of numbers and variables (e.g., $5$, $x$, $3x^2$).
+* **Coefficient:** The numerical factor multiplied by a variable in a term (e.g., $4$ in $4x$).
+* **Expression:** A mathematical phrase containing terms, coefficients, and operational signs, but no equality sign (e.g., $3x + 5$).
+* **Equation:** A mathematical statement declaring that two expressions are equal (e.g., $3x + 5 = 14$).
+
+## Relationships to Other Mathematical Domains
+
+* **Arithmetic:** Serves as the direct foundation for algebra; arithmetic rules (distributive, associative, commutative properties) dictate algebraic manipulation.
+* **Geometry:** Integrates with geometry through coordinate systems (Analytic Geometry), allowing geometric shapes and lines to be described using algebraic equations.
+* **Calculus:** Relies on algebraic manipulation as a prerequisite for computing limits, derivatives, and integrals.
+* **Applied Mathematics & Science:** Provides the fundamental modeling language used to express laws in physics, economics, engineering, and data science.

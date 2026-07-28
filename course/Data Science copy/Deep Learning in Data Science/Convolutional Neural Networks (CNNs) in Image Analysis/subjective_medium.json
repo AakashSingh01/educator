@@ -1,0 +1,31 @@
+{
+  "version": 1,
+  "type": "subjective",
+  "difficulty": "medium",
+  "subject": "Data Science",
+  "topic": "Deep Learning in Data Science/Convolutional Neural Networks (CNNs) in Image Analysis",
+  "notes_hash": "548180e166a511777d662f29857c35954c52ccac078a04cf56874928c41e90bf",
+  "generated_at": "2026-07-26T10:15:12.796815+00:00",
+  "items": [
+    {
+      "question": "How does fully connected layer contribute to image classification?",
+      "answer": "A fully connected layer contributes to image classification by taking the output of the convolutional and pooling layers and flattening it into a one-dimensional array. This array is then fed into the fully connected layer, which uses weights and biases to learn the relationship between the input features and the desired output classes."
+    },
+    {
+      "question": "What is the difference between max pooling and average pooling?",
+      "answer": "Max pooling reduces the spatial dimensions of the feature maps by taking the maximum value across each window, whereas average pooling takes the mean value. Max pooling preserves more details but can lead to overfitting, while average pooling reduces noise but may lose important features."
+    },
+    {
+      "question": "Can CNNs be used for tasks other than image analysis?",
+      "answer": "Yes, CNNs can be used for tasks other than image analysis, such as video analysis, speech recognition, and natural language processing. They have been successfully applied to these areas by modifying the architecture or using transfer learning."
+    },
+    {
+      "question": "Explain the concept of convolutional autoencoders (CAE) in relation to CNNs.",
+      "answer": "Convolutional Autoencoders (CAE) are a type of neural network that uses CNNs to learn a compressed representation of an input image. The compressed representation is then used as input to a decoder, which tries to reconstruct the original image. CAEs can be used for dimensionality reduction and generative modeling."
+    },
+    {
+      "question": "What are some common applications of U-Net architecture?",
+      "answer": "The U-Net architecture is commonly used for biomedical image segmentation tasks such as tumor segmentation, organ segmentation, and image-guided surgery. It has also been applied to other domains like object segmentation and image-to-image translation."
+    }
+  ]
+}

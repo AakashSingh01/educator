@@ -1,0 +1,31 @@
+{
+  "version": 1,
+  "type": "subjective",
+  "difficulty": "easy",
+  "subject": "Data Science",
+  "topic": "Deep Learning in Data Science/Convolutional Neural Networks (CNNs) in Image Analysis",
+  "notes_hash": "548180e166a511777d662f29857c35954c52ccac078a04cf56874928c41e90bf",
+  "generated_at": "2026-07-26T10:14:57.965688+00:00",
+  "items": [
+    {
+      "question": "What is the primary function of a convolutional layer in a CNN?",
+      "answer": "A convolutional layer performs spatial convolutions on input images using kernels to extract features."
+    },
+    {
+      "question": "How does pooling layer help reduce the number of parameters and computational cost?",
+      "answer": "Pooling layers downsample feature maps by reducing spatial dimensions, thereby reducing the number of parameters and computational cost."
+    },
+    {
+      "question": "What is the purpose of activation functions in a neural network?",
+      "answer": "Activation functions introduce non-linearity into the network to enable learning of complex relationships."
+    },
+    {
+      "question": "Can you explain the concept of batch normalization?",
+      "answer": "Batch normalization normalizes input data for each layer by subtracting the mean and dividing by the standard deviation, improving training stability and speed."
+    },
+    {
+      "question": "Why do we use dropout during training?",
+      "answer": "Dropout randomly sets a fraction rate of neurons to zero during training to prevent overfitting."
+    }
+  ]
+}
