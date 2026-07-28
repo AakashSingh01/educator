@@ -10,6 +10,7 @@ from llm_config import (
     GEMINI_API_KEY,
     GEMINI_MAX_OUTPUT_TOKENS,
     GEMINI_MODEL,
+    GEMINI_THINKING_LEVEL,
     GEMINI_TIMEOUT_SECONDS,
     GEMINI_USE_GOOGLE_SEARCH,
     LLM_PROVIDER,
@@ -116,6 +117,7 @@ class GeminiListener:
         timeout=None,
         enable_google_search=None,
         max_output_tokens=None,
+        thinking_level=None,
         client=None,
     ):
         self.api_key = api_key if api_key is not None else GEMINI_API_KEY
@@ -129,7 +131,9 @@ class GeminiListener:
             if max_output_tokens is None
             else max(256, int(max_output_tokens))
         )
+        self.thinking_level = thinking_level or GEMINI_THINKING_LEVEL
         self._client = client
+        self.last_response_metadata = None
 
     def _get_client(self):
         if self._client is not None:
@@ -178,6 +182,27 @@ class GeminiListener:
 
     @classmethod
     def _response_text(cls, result):
+        # The Interactions API may split one answer across model-output steps
+        # separated by internal thought steps. Its output_text helper exposes
+        # only the trailing contiguous segment, which can leave JSON truncated.
+        step_fragments = []
+        for step in cls._field(result, "steps", []) or []:
+            step_type = cls._field(step, "type")
+            if step_type == "user_input":
+                step_fragments = []
+                continue
+            if step_type != "model_output":
+                continue
+            for content in cls._field(step, "content", []) or []:
+                if cls._field(content, "type") != "text":
+                    continue
+                text = cls._field(content, "text")
+                if isinstance(text, str):
+                    step_fragments.append(text)
+        combined_text = "".join(step_fragments).strip()
+        if combined_text:
+            return combined_text
+
         direct_text = cls._field(result, "output_text")
         if isinstance(direct_text, str) and direct_text.strip():
             return direct_text.strip()
@@ -191,6 +216,26 @@ class GeminiListener:
         if fragments:
             return "\n".join(fragments)
         raise GeminiError("Gemini returned an empty response.")
+
+    @classmethod
+    def _response_metadata(cls, result):
+        usage = cls._field(result, "usage")
+        usage_fields = (
+            "total_input_tokens",
+            "total_output_tokens",
+            "total_thought_tokens",
+            "total_tool_use_tokens",
+            "total_tokens",
+        )
+        return {
+            "status": cls._field(result, "status"),
+            "interaction_id": cls._field(result, "id"),
+            "usage": {
+                name: cls._field(usage, name)
+                for name in usage_fields
+                if cls._field(usage, name) is not None
+            },
+        }
 
     @staticmethod
     def _is_tool_call_limit_error(error):
@@ -229,7 +274,12 @@ class GeminiListener:
             "input": conversation_input,
             # The application expects a JSON response from every provider.
             "response_format": {"type": "text", "mime_type": "application/json"},
-            "generation_config": {"max_output_tokens": output_token_limit},
+            "generation_config": {
+                "max_output_tokens": output_token_limit,
+                "thinking_level": getattr(
+                    self, "thinking_level", GEMINI_THINKING_LEVEL
+                ),
+            },
         }
         if tools:
             request["tools"] = tools
@@ -253,6 +303,7 @@ class GeminiListener:
                     f"Gemini could not complete the request after retrying without "
                     f"Google Search: {retry_error}"
                 ) from retry_error
+        self.last_response_metadata = self._response_metadata(result)
         return self._response_text(result)
 
 
@@ -273,6 +324,7 @@ def create_llm_client(provider=None):
             timeout=GEMINI_TIMEOUT_SECONDS,
             enable_google_search=GEMINI_USE_GOOGLE_SEARCH,
             max_output_tokens=GEMINI_MAX_OUTPUT_TOKENS,
+            thinking_level=GEMINI_THINKING_LEVEL,
         )
     else:
         raise LLMError("EDUCATOR_LLM_PROVIDER must be either 'ollama' or 'gemini'.")

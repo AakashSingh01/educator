@@ -40,6 +40,11 @@ GEMINI_MAX_OUTPUT_TOKENS = _integer_setting(
     minimum=256,
     maximum=32768,
 )
+GEMINI_THINKING_LEVEL = os.getenv(
+    "GEMINI_THINKING_LEVEL", "minimal"
+).strip().casefold()
+if GEMINI_THINKING_LEVEL not in {"minimal", "low", "medium", "high"}:
+    GEMINI_THINKING_LEVEL = "minimal"
 # Smaller structured tasks use these provider-independent ceilings.
 LEARNING_ITEM_MAX_OUTPUT_TOKENS = _integer_setting(
     "LEARNING_ITEM_MAX_OUTPUT_TOKENS", 1800, minimum=256

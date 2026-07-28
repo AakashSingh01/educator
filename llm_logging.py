@@ -118,5 +118,8 @@ class LoggedLLMClient:
             "model": model,
             "elapsed_seconds": perf_counter() - started_at,
             "response": response,
+            "response_metadata": getattr(
+                self.client, "last_response_metadata", None
+            ),
         })
         return response
