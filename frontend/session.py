@@ -1,7 +1,6 @@
 """Active learning-item display, timing, feedback, and follow-up chat."""
 
 import time
-from html import escape
 
 import streamlit as st
 from streamlit_autorefresh import st_autorefresh
@@ -147,7 +146,8 @@ def render_learning_session(backend):
         return
 
     st.caption(f"Question scope: {backend.get_learning_context_label() or st.session_state.category}")
-    st.markdown(f'<div class="question-title">{escape(step["question"])}</div>', unsafe_allow_html=True)
+    with st.container(border=True, key="question_content"):
+        st.markdown(step["question"])
     if step["type"] == PageType.MCQ:
         answer = st.radio("Select", step["options"], disabled=timed_out)
         _show_submit_feedback()

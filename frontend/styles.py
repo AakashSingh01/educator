@@ -35,7 +35,7 @@ def inject_custom_styles():
         div[role="radiogroup"] label, div[role="radio"] {{ font-size: {FONT_SIZES["radio_option"]} !important; color: {UI_COLORS["ink"]} !important; }}
         div[role="radiogroup"] {{ gap: 0.45rem; }}
         .stRadio label, .stRadio div[role="radio"] {{ font-size: {FONT_SIZES["radio_option"]} !important; }}
-        .question-title {{ font-size: {FONT_SIZES["question"]}; font-weight: 600; line-height: 1.35; color: {UI_COLORS["ink"]}; background: {UI_COLORS["surface"]}; border: 1px solid {UI_COLORS["border"]}; border-left: 4px solid {UI_COLORS["primary"]}; border-radius: 0.7rem; margin: 0.65rem 0 1rem; padding: 1rem 1.15rem; }}
+        [class*="st-key-question_content"] {{ font-size: {FONT_SIZES["question"]}; font-weight: 600; line-height: 1.35; color: {UI_COLORS["ink"]}; background: {UI_COLORS["surface"]}; border-left: 4px solid {UI_COLORS["primary"]} !important; border-radius: 0.7rem; margin: 0.65rem 0 1rem; }}
         .stTextArea label {{ font-size: {FONT_SIZES["text_area_label"]} !important; font-weight: 600; }}
         </style>
         """,

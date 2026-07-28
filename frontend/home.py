@@ -7,7 +7,7 @@ def render_home(backend):
     st.title("Learning App")
     st.subheader("Notes workspace")
     actions = st.columns(2)
-    if actions[0].button("📝 Prepare notes", key="prepare_notes", type="primary", width="stretch"):
+    if actions[0].button("Prepare notes", key="prepare_notes", type="primary", width="stretch"):
         st.session_state.mode = "notes"
         st.rerun()
     if actions[1].button("Mock test", key="start_mock_test", width="stretch"):
