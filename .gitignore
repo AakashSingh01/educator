@@ -10,3 +10,6 @@ __pycache__/
 
 # Local model request/response logs
 logs/
+
+# User-owned course notes and generated learning material
+course/

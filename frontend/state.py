@@ -25,6 +25,9 @@ DEFAULTS = {
     "mock_test_question_index": 0,
     "mock_test_end_time": None,
     "mock_test_timed_out": False,
+    "home_panel": None,
+    "read_subject": None,
+    "read_scope": "",
 }
 
 

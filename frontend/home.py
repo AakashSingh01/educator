@@ -5,14 +5,48 @@ import streamlit as st
 
 def render_home(backend):
     st.title("Learning App")
-    st.subheader("Notes workspace")
-    actions = st.columns(2)
-    if actions[0].button("Prepare notes", key="prepare_notes", type="primary", width="stretch"):
+    st.subheader("Choose a workspace")
+    actions = st.columns(4)
+    if actions[0].button(
+        "Notes",
+        icon=":material/edit_note:",
+        key="prepare_notes",
+        width="stretch",
+    ):
         st.session_state.mode = "notes"
         st.rerun()
-    if actions[1].button("Mock test", key="start_mock_test", width="stretch"):
+    if actions[1].button(
+        "Test",
+        icon=":material/quiz:",
+        key="start_mock_test",
+        width="stretch",
+    ):
         st.session_state.mode = "mock_test"
         st.rerun()
+    if actions[2].button(
+        "Read",
+        icon=":material/menu_book:",
+        key="start_reader",
+        width="stretch",
+    ):
+        st.session_state.mode = "read"
+        st.session_state.read_subject = None
+        st.session_state.read_scope = ""
+        st.rerun()
+    if actions[3].button(
+        "Learn",
+        icon=":material/school:",
+        key="show_learning_subjects",
+        type="primary",
+        width="stretch",
+    ):
+        st.session_state.home_panel = "learn"
+        st.rerun()
+
+    if st.session_state.home_panel != "learn":
+        st.caption("Prepare notes, take a mock test, browse your material, or start a learning session.")
+        return
+
     st.subheader("Learn a subject")
     categories = backend.get_categories()
     if not categories:

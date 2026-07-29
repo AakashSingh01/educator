@@ -9,9 +9,16 @@ from .learning import LearningSessionMixin
 from .mock_test import MockTestMixin
 from .notes import NotesPreparationMixin
 from .question_bank import QuestionBankMixin
+from .reader import ReaderMixin
 
 
-class LearningBackend(NotesPreparationMixin, QuestionBankMixin, LearningSessionMixin, MockTestMixin):
+class LearningBackend(
+    ReaderMixin,
+    NotesPreparationMixin,
+    QuestionBankMixin,
+    LearningSessionMixin,
+    MockTestMixin,
+):
     """Backend facade used by Streamlit and worker processes."""
 
     def __init__(self, course_path=None, llm_client=None):
