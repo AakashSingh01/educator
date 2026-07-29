@@ -13,3 +13,7 @@ logs/
 
 # User-owned course notes and generated learning material
 course/
+
+# Personal documents and machine-specific agent integrations
+AakashSinghCV*.pdf
+.agents/skills/
