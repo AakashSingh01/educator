@@ -38,6 +38,7 @@ class LearningBackend(
         self.learning_type_cycle = []
         self.timer_preset = "Infinite"
         self.prepared_item_ids = set()
+        self.learning_progress_subject = None
         self.mock_test_session = None
         self.mock_test_counter = 0
 

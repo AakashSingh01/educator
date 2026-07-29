@@ -70,6 +70,12 @@ def render_learning_setup(backend):
     )
     if not allowed_difficulties:
         st.warning("Choose at least one difficulty.")
+    saved_progress = backend.get_learning_progress(subject)
+    if saved_progress["seen_items"]:
+        st.caption(
+            f"Saved progress: {saved_progress['seen_items']} prepared item(s) "
+            "already shown. They will be skipped until their eligible pool is complete."
+        )
 
     learning_mode = st.checkbox("Learning mode (use infinite time)", key=f"setup_learning_mode_{subject}", help="Learning mode keeps every selected item type untimed.")
     if learning_mode:

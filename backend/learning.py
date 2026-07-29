@@ -1,5 +1,7 @@
 """Prepared-item learning sessions, answers, and result follow-ups."""
 
+import hashlib
+import json
 import random
 import re
 from pathlib import Path
@@ -18,6 +20,94 @@ from .models import PageType
 
 
 class LearningSessionMixin:
+    LEARNING_PROGRESS_VERSION = 1
+
+    def _learning_progress_path(self, subject):
+        return (
+            self.course_path
+            / self._folder_name(subject)
+            / ".learning_progress.json"
+        )
+
+    def _load_learning_progress(self, subject):
+        progress_path = self._learning_progress_path(subject)
+        if not progress_path.is_file():
+            return {"seen_item_ids": [], "last_session": None}
+        try:
+            progress = json.loads(progress_path.read_text(encoding="utf-8"))
+        except (OSError, json.JSONDecodeError):
+            return {"seen_item_ids": [], "last_session": None}
+        if (
+            not isinstance(progress, dict)
+            or progress.get("version") != self.LEARNING_PROGRESS_VERSION
+        ):
+            return {"seen_item_ids": [], "last_session": None}
+        seen_item_ids = progress.get("seen_item_ids")
+        last_session = progress.get("last_session")
+        return {
+            "seen_item_ids": (
+                [item_id for item_id in seen_item_ids if isinstance(item_id, str)]
+                if isinstance(seen_item_ids, list)
+                else []
+            ),
+            "last_session": last_session if isinstance(last_session, dict) else None,
+        }
+
+    def _save_learning_progress(self):
+        subject = self.learning_progress_subject
+        if not subject:
+            return
+        progress_path = self._learning_progress_path(subject)
+        progress_path.parent.mkdir(parents=True, exist_ok=True)
+        progress = {
+            "version": self.LEARNING_PROGRESS_VERSION,
+            "subject": subject,
+            "seen_item_ids": sorted(self.prepared_item_ids),
+            "last_session": {
+                "scope": self.learning_scope,
+                "types": list(self.learning_types),
+                "difficulties": list(self.learning_difficulties),
+                "type_cycle": list(self.learning_type_cycle),
+            },
+        }
+        temporary_path = progress_path.with_suffix(".tmp")
+        try:
+            temporary_path.write_text(
+                json.dumps(progress, indent=2, ensure_ascii=False) + "\n",
+                encoding="utf-8",
+            )
+            temporary_path.replace(progress_path)
+        except OSError:
+            temporary_path.unlink(missing_ok=True)
+
+    def get_learning_progress(self, subject):
+        """Return durable seen-item progress for one subject."""
+
+        progress = self._load_learning_progress(subject)
+        return {"seen_items": len(set(progress["seen_item_ids"]))}
+
+    def _restore_learning_progress(self, subject):
+        progress = self._load_learning_progress(subject)
+        self.prepared_item_ids = set(progress["seen_item_ids"])
+        self.learning_type_cycle = []
+        last_session = progress["last_session"]
+        if not last_session:
+            return
+        same_configuration = (
+            last_session.get("scope") == self.learning_scope
+            and tuple(last_session.get("types", ())) == self.learning_types
+            and tuple(last_session.get("difficulties", ()))
+            == self.learning_difficulties
+        )
+        saved_cycle = last_session.get("type_cycle")
+        if (
+            same_configuration
+            and isinstance(saved_cycle, list)
+            and len(saved_cycle) == len(set(saved_cycle))
+            and set(saved_cycle).issubset(self.learning_types)
+        ):
+            self.learning_type_cycle = list(saved_cycle)
+
     @staticmethod
     def _is_within_scope(relative_topic, scope):
         """Return whether a notes folder is the chosen scope or one of its children."""
@@ -63,8 +153,8 @@ class LearningSessionMixin:
         self.learning_boundary_label = category if not scope else f"{category} / {scope}"
         self.learning_types = allowed_types
         self.learning_difficulties = allowed_difficulties
-        self.learning_type_cycle = []
-        self.prepared_item_ids.clear()
+        self.learning_progress_subject = category
+        self._restore_learning_progress(category)
         self.timer_preset = timer_preset
         self.on_event("chapter_started", category=category)
 
@@ -160,8 +250,22 @@ class LearningSessionMixin:
                     if step is None:
                         continue
                     step["difficulty"] = difficulty
+                    bank_path = self._question_bank_path(
+                        notes_path.parent,
+                        item_type,
+                        difficulty,
+                    )
+                    relative_bank_path = bank_path.relative_to(root)
+                    item_fingerprint = hashlib.sha256(
+                        json.dumps(
+                            item,
+                            ensure_ascii=False,
+                            sort_keys=True,
+                            separators=(",", ":"),
+                        ).encode("utf-8")
+                    ).hexdigest()[:16]
                     yield (
-                        f"{item_type}:{self._question_bank_path(notes_path.parent, item_type, difficulty)}:{index}",
+                        f"{item_type}:{relative_bank_path.as_posix()}:{index}:{item_fingerprint}",
                         step,
                         {"label": label, "notes": notes},
                     )
@@ -184,12 +288,14 @@ class LearningSessionMixin:
     def _select_prepared_step(self, subject, item_type):
         selected = fallback = None
         unseen_count = fallback_count = 0
+        eligible_identifiers = set()
         for identifier, step, context in self._prepared_item_candidates(
             subject,
             self.learning_scope,
             item_type,
             self.learning_difficulties,
         ):
+            eligible_identifiers.add(identifier)
             fallback_count += 1
             if random.randrange(fallback_count) == 0:
                 fallback = (identifier, step, context)
@@ -199,13 +305,14 @@ class LearningSessionMixin:
             if random.randrange(unseen_count) == 0:
                 selected = (identifier, step, context)
         if selected is None and fallback is not None:
-            self.prepared_item_ids = {identifier for identifier in self.prepared_item_ids if not identifier.startswith(f"{item_type}:")}
+            self.prepared_item_ids.difference_update(eligible_identifiers)
             selected = fallback
         if selected is None:
             return None
         identifier, step, context = selected
         self.prepared_item_ids.add(identifier)
         self.learning_context = context
+        self._save_learning_progress()
         return step
 
     def select_learning_context(self, subject, scope="", exclude_label=None):
