@@ -1,6 +1,6 @@
 """Read-only access to notes and prepared learning items."""
 
-from question_bank_config import QUESTION_BANK_DIFFICULTIES
+from config.question_bank import QUESTION_BANK_DIFFICULTIES
 
 
 class ReaderMixin:

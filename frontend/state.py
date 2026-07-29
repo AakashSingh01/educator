@@ -3,7 +3,7 @@
 import streamlit as st
 
 from backend import LearningBackend
-from learning_config import QUESTION_MODE_TYPES
+from config.learning import QUESTION_MODE_TYPES
 from llm_logging import LoggedLLMClient
 
 

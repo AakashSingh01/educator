@@ -2,7 +2,7 @@
 
 from pathlib import Path
 
-from app_config import get_course_path
+from config.app import get_course_path
 from llm import LLMClient, create_llm_client
 
 from .learning import LearningSessionMixin

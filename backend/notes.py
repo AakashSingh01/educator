@@ -4,7 +4,7 @@ import json
 import shutil
 from pathlib import Path
 
-from llm_config import (
+from config.llm import (
     NOTES_CONTEXT_CHAR_LIMIT,
     NOTES_MAX_OUTPUT_TOKENS,
     SUBTOPIC_SUGGESTIONS_MAX_OUTPUT_TOKENS,

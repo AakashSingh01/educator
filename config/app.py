@@ -4,7 +4,7 @@ import os
 from pathlib import Path
 
 
-PROJECT_PATH = Path(__file__).resolve().parent
+PROJECT_PATH = Path(__file__).resolve().parent.parent
 
 
 def load_project_env():

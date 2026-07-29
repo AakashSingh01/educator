@@ -6,7 +6,7 @@ from urllib.error import HTTPError, URLError
 from urllib.request import Request, urlopen
 
 from llm_logging import LoggedLLMClient
-from llm_config import (
+from config.llm import (
     GEMINI_API_KEY,
     GEMINI_MAX_OUTPUT_TOKENS,
     GEMINI_MODEL,

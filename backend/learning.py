@@ -4,14 +4,14 @@ import random
 import re
 from pathlib import Path
 
-from learning_config import LEARNING_MODE_TYPES, TIMER_PRESETS, get_time_limit
-from llm_config import (
+from config.learning import LEARNING_MODE_TYPES, TIMER_PRESETS, get_time_limit
+from config.llm import (
     LEARNING_ITEM_MAX_OUTPUT_TOKENS,
     RESULT_FOLLOW_UP_MAX_OUTPUT_TOKENS,
     SUBJECTIVE_ASSESSMENT_MAX_OUTPUT_TOKENS,
 )
 from prompt_loader import render_prompt
-from question_bank_config import QUESTION_BANK_DIFFICULTIES
+from config.question_bank import QUESTION_BANK_DIFFICULTIES
 from response_parsing import parse_json_object
 
 from .models import PageType

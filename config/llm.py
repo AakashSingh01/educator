@@ -6,7 +6,7 @@ read from the environment so an API key is never stored with the project.
 
 import os
 
-from app_config import load_project_env
+from config.app import load_project_env
 
 
 def _integer_setting(name, default, minimum=1, maximum=None):

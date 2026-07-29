@@ -6,7 +6,7 @@ from datetime import datetime, timezone
 from pathlib import Path
 from threading import Lock
 
-from app_config import PROJECT_PATH
+from config.app import PROJECT_PATH
 
 try:
     import fcntl

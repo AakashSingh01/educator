@@ -10,7 +10,7 @@ from pathlib import Path
 from time import perf_counter
 
 from prompt_loader import render_prompt
-from question_bank_config import (
+from config.question_bank import (
     PREPARATION_OUTPUT_ATTEMPTS,
     PREPARATION_WORKERS,
     QUESTION_BANK_DIFFICULTIES,

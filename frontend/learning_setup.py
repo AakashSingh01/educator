@@ -2,7 +2,7 @@
 
 import streamlit as st
 
-from learning_config import TIMER_PRESETS
+from config.learning import TIMER_PRESETS
 from llm import LLMError
 
 from .state import reset_chapter

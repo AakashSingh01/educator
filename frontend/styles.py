@@ -2,7 +2,7 @@
 
 import streamlit as st
 
-from ui_config import FONT_SIZES, UI_COLORS
+from config.ui import FONT_SIZES, UI_COLORS
 
 
 def inject_custom_styles():
