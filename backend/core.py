@@ -3,6 +3,7 @@
 from pathlib import Path
 
 from config.app import get_course_path
+from config.question_bank import QUESTION_BANK_DIFFICULTIES
 from llm import LLMClient, create_llm_client
 
 from .learning import LearningSessionMixin
@@ -33,6 +34,7 @@ class LearningBackend(
         self.learning_scope = ""
         self.learning_boundary_label = None
         self.learning_types = ("mcq", "subjective", "theory")
+        self.learning_difficulties = QUESTION_BANK_DIFFICULTIES
         self.learning_type_cycle = []
         self.timer_preset = "Infinite"
         self.prepared_item_ids = set()

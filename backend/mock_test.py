@@ -3,14 +3,17 @@
 import random
 from pathlib import Path
 
+from config.question_bank import normalise_difficulties
+
 
 class MockTestMixin:
     """Create and grade a one-session mock test from prepared MCQ banks."""
 
-    def _mock_test_candidates(self, subject, scope=""):
+    def _mock_test_candidates(self, subject, scope="", difficulties=None):
         """Return prepared MCQs in one subject or a topic subtree."""
 
         subject = self._folder_name(subject)
+        difficulties = normalise_difficulties(difficulties)
         if subject not in self.get_categories():
             raise ValueError("Choose a valid subject for the mock test.")
         if not isinstance(scope, str) or scope not in self.get_learning_scopes(subject):
@@ -18,7 +21,12 @@ class MockTestMixin:
 
         candidates = []
         seen_identifiers = set()
-        for identifier, step, context in self._prepared_item_candidates(subject, scope, "mcq"):
+        for identifier, step, context in self._prepared_item_candidates(
+            subject,
+            scope,
+            "mcq",
+            difficulties,
+        ):
             if identifier in seen_identifiers:
                 continue
             seen_identifiers.add(identifier)
@@ -36,10 +44,10 @@ class MockTestMixin:
             })
         return candidates
 
-    def get_mock_test_capacity(self, subject, scope=""):
+    def get_mock_test_capacity(self, subject, scope="", difficulties=None):
         """Return the usable prepared MCQs in a subject or its topic subtree."""
 
-        return len(self._mock_test_candidates(subject, scope))
+        return len(self._mock_test_candidates(subject, scope, difficulties))
 
     @staticmethod
     def _scope_label(subject, scope):
@@ -102,9 +110,17 @@ class MockTestMixin:
                     )
         return requests
 
-    def create_mock_test(self, scope_question_counts, duration_minutes, correct_marks, incorrect_marks):
+    def create_mock_test(
+        self,
+        scope_question_counts,
+        duration_minutes,
+        correct_marks,
+        incorrect_marks,
+        difficulties=None,
+    ):
         """Create a shuffled, mutable test with exact counts per selected area."""
 
+        difficulties = normalise_difficulties(difficulties)
         if not isinstance(duration_minutes, (int, float)) or isinstance(duration_minutes, bool) or duration_minutes <= 0:
             raise ValueError("Test duration must be greater than zero minutes.")
         if not isinstance(correct_marks, (int, float)) or isinstance(correct_marks, bool) or correct_marks <= 0:
@@ -125,7 +141,12 @@ class MockTestMixin:
             )
             label = self._scope_label(subject, scope)
             candidates = [
-                candidate for candidate in self._mock_test_candidates(subject, scope)
+                candidate
+                for candidate in self._mock_test_candidates(
+                    subject,
+                    scope,
+                    difficulties,
+                )
                 if candidate["id"] not in selected_identifiers
             ]
             if requested_count > len(candidates):
@@ -147,6 +168,7 @@ class MockTestMixin:
             "answers": {},
             "subject_question_counts": normalized_subject_counts,
             "scope_question_counts": normalized_scope_counts,
+            "difficulties": difficulties,
             "duration_seconds": int(round(duration_minutes * 60)),
             "correct_marks": float(correct_marks),
             "incorrect_marks": float(incorrect_marks),

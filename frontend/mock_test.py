@@ -6,6 +6,8 @@ from pathlib import Path
 
 import streamlit as st
 
+from config.question_bank import QUESTION_BANK_DIFFICULTIES
+
 
 def _format_remaining(seconds):
     seconds = max(0, int(seconds))
@@ -109,7 +111,7 @@ def _has_overlapping_mock_test_scope(requests, subject, scope):
     )
 
 
-def _render_mock_test_scope_picker(backend, requests):
+def _render_mock_test_scope_picker(backend, requests, difficulties):
     """Browse a compact topic tree and add one independent test boundary."""
 
     subjects = backend.get_categories()
@@ -172,7 +174,15 @@ def _render_mock_test_scope_picker(backend, requests):
         else:
             st.info("No direct subtopics match that filter.")
 
-    capacity = backend.get_mock_test_capacity(subject, selected_scope)
+    capacity = (
+        backend.get_mock_test_capacity(
+            subject,
+            selected_scope,
+            difficulties,
+        )
+        if difficulties
+        else 0
+    )
     overlap = _has_overlapping_mock_test_scope(requests, subject, selected_scope)
     st.caption(f"{capacity} prepared objective question(s) are available in this area.")
     if overlap:
@@ -194,8 +204,25 @@ def _render_mock_test_setup(backend):
     if st.button("← Back to learning", key="mock_test_back"):
         _return_to_learning_home(backend)
 
+    st.subheader("Difficulty")
+    difficulty_columns = st.columns(3)
+    difficulties = tuple(
+        difficulty
+        for column, difficulty in zip(
+            difficulty_columns,
+            QUESTION_BANK_DIFFICULTIES,
+        )
+        if column.checkbox(
+            difficulty.title(),
+            value=True,
+            key=f"mock_test_difficulty_{difficulty}",
+        )
+    )
+    if not difficulties:
+        st.warning("Choose at least one difficulty.")
+
     requests = _mock_test_scope_requests()
-    _render_mock_test_scope_picker(backend, requests)
+    _render_mock_test_scope_picker(backend, requests, difficulties)
     requests = _mock_test_scope_requests()
     st.subheader("Selected areas")
     if not requests:
@@ -206,7 +233,15 @@ def _render_mock_test_setup(backend):
     unavailable = []
     for request in requests:
         label = _scope_label(request["subject"], request["scope"])
-        capacity = backend.get_mock_test_capacity(request["subject"], request["scope"])
+        capacity = (
+            backend.get_mock_test_capacity(
+                request["subject"],
+                request["scope"],
+                difficulties,
+            )
+            if difficulties
+            else 0
+        )
         capacities[label] = capacity
         if not capacity:
             unavailable.append(label)
@@ -239,6 +274,14 @@ def _render_mock_test_setup(backend):
             capacity = capacities[label]
             if not capacity:
                 continue
+            count_key = f"mock_test_count_{_scope_key(subject, scope)}"
+            existing_count = st.session_state.get(count_key)
+            if (
+                not isinstance(existing_count, int)
+                or isinstance(existing_count, bool)
+                or not 1 <= existing_count <= capacity
+            ):
+                st.session_state.pop(count_key, None)
             scope_requests.append({
                 "subject": subject,
                 "scope": scope,
@@ -248,7 +291,7 @@ def _render_mock_test_setup(backend):
                     max_value=capacity,
                     value=min(10, capacity),
                     step=1,
-                    key=f"mock_test_count_{_scope_key(subject, scope)}",
+                    key=count_key,
                 ),
             })
 
@@ -278,7 +321,11 @@ def _render_mock_test_setup(backend):
             format="%.2f",
             key="mock_test_incorrect_marks",
         )
-        start = st.form_submit_button("Start mock test", type="primary", disabled=bool(unavailable))
+        start = st.form_submit_button(
+            "Start mock test",
+            type="primary",
+            disabled=bool(unavailable) or not difficulties,
+        )
 
     if not start:
         return
@@ -288,6 +335,7 @@ def _render_mock_test_setup(backend):
             duration_minutes,
             correct_marks,
             incorrect_marks,
+            difficulties,
         )
         st.session_state.mock_test_question_index = 0
         st.session_state[_active_question_key(test["id"])] = 0
@@ -453,6 +501,14 @@ def _render_mock_test_attempt(backend, test):
     _set_mock_test_question(active_index, test_id, total_questions)
 
     st.title("Mock test review" if test["submitted"] else "Mock test")
+    if test.get("difficulties"):
+        st.caption(
+            "Difficulty: "
+            + ", ".join(
+                difficulty.title()
+                for difficulty in test["difficulties"]
+            )
+        )
     progress = backend.get_mock_test_progress()
     status, timer, marks = st.columns(3)
     status.metric("Attempted", f"{progress['attempted']} / {progress['total']}")

@@ -3,6 +3,7 @@
 import streamlit as st
 
 from config.learning import TIMER_PRESETS
+from config.question_bank import QUESTION_BANK_DIFFICULTIES
 from llm import LLMError
 
 from .state import reset_chapter
@@ -53,6 +54,23 @@ def render_learning_setup(backend):
         (include_objective, "mcq"), (include_subjective, "subjective"), (include_theory, "theory")
     ) if enabled)
 
+    st.subheader("Difficulty")
+    difficulty_columns = st.columns(3)
+    allowed_difficulties = tuple(
+        difficulty
+        for column, difficulty in zip(
+            difficulty_columns,
+            QUESTION_BANK_DIFFICULTIES,
+        )
+        if column.checkbox(
+            difficulty.title(),
+            value=True,
+            key=f"setup_difficulty_{difficulty}_{subject}",
+        )
+    )
+    if not allowed_difficulties:
+        st.warning("Choose at least one difficulty.")
+
     learning_mode = st.checkbox("Learning mode (use infinite time)", key=f"setup_learning_mode_{subject}", help="Learning mode keeps every selected item type untimed.")
     if learning_mode:
         timer_preset = "Infinite"
@@ -61,10 +79,23 @@ def render_learning_setup(backend):
         timer_preset = st.selectbox("Timer", options=list(TIMER_PRESETS), index=list(TIMER_PRESETS).index("Normal"), key=f"timer_preset_{subject}")
         st.caption("Slow: 2 min objective / 4 min subjective · Normal: 1 min / 2 min · Fast: 30 sec / 1 min")
 
-    if st.button("Start learning", type="primary", use_container_width=True, key="start_configured_learning"):
+    if st.button(
+        "Start learning",
+        type="primary",
+        use_container_width=True,
+        key="start_configured_learning",
+        disabled=not allowed_types or not allowed_difficulties,
+    ):
         try:
             with st.spinner("Creating your first learning item..."):
-                reset_chapter(backend, subject, selected_scope, allowed_types, timer_preset)
+                reset_chapter(
+                    backend,
+                    subject,
+                    selected_scope,
+                    allowed_types,
+                    timer_preset,
+                    allowed_difficulties,
+                )
                 st.session_state.step = backend.generate_initial_step(subject)
             st.session_state.setup_subject = None
             st.rerun()

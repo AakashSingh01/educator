@@ -136,6 +136,8 @@ def render_learning_session(backend):
         st.stop()
 
     if step["type"] == PageType.THEORY:
+        if step.get("difficulty"):
+            st.caption(f"Difficulty: {step['difficulty'].title()}")
         st.header(step["title"])
         st.write(step["content"])
         if timed_out:
@@ -145,7 +147,13 @@ def render_learning_session(backend):
             _goto_next(backend)
         return
 
-    st.caption(f"Question scope: {backend.get_learning_context_label() or st.session_state.category}")
+    question_caption = (
+        f"Question scope: "
+        f"{backend.get_learning_context_label() or st.session_state.category}"
+    )
+    if step.get("difficulty"):
+        question_caption += f" · {step['difficulty'].title()}"
+    st.caption(question_caption)
     with st.container(border=True, key="question_content"):
         st.markdown(step["question"])
     if step["type"] == PageType.MCQ:

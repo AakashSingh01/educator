@@ -34,3 +34,27 @@ QUESTION_BANK_OUTLINE_MAX_OUTPUT_TOKENS = 1800
 QUESTION_BANK_SUBJECTIVE_MAX_OUTPUT_TOKENS = 2000
 QUESTION_BANK_OBJECTIVE_MAX_OUTPUT_TOKENS = 3600
 QUESTION_BANK_THEORY_MAX_OUTPUT_TOKENS = 2600
+
+
+def normalise_difficulties(difficulties=None):
+    """Return validated difficulty names in the application's stable order."""
+
+    if difficulties is None:
+        return QUESTION_BANK_DIFFICULTIES
+    if isinstance(difficulties, str):
+        difficulties = (difficulties,)
+    try:
+        requested = {
+            difficulty.strip().casefold()
+            for difficulty in difficulties
+            if isinstance(difficulty, str) and difficulty.strip()
+        }
+    except TypeError as error:
+        raise ValueError("Choose at least one valid difficulty.") from error
+    if not requested or not requested.issubset(QUESTION_BANK_DIFFICULTIES):
+        raise ValueError("Choose at least one valid difficulty.")
+    return tuple(
+        difficulty
+        for difficulty in QUESTION_BANK_DIFFICULTIES
+        if difficulty in requested
+    )

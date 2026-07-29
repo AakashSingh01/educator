@@ -11,7 +11,7 @@ from config.llm import (
     SUBJECTIVE_ASSESSMENT_MAX_OUTPUT_TOKENS,
 )
 from prompt_loader import render_prompt
-from config.question_bank import QUESTION_BANK_DIFFICULTIES
+from config.question_bank import normalise_difficulties
 from response_parsing import parse_json_object
 
 from .models import PageType
@@ -27,8 +27,16 @@ class LearningSessionMixin:
         selected_scope = Path(scope)
         return relative_topic == selected_scope or selected_scope in relative_topic.parents
 
-    def start_course(self, category, scope="", allowed_types=None, timer_preset="Normal"):
+    def start_course(
+        self,
+        category,
+        scope="",
+        allowed_types=None,
+        timer_preset="Normal",
+        allowed_difficulties=None,
+    ):
         allowed_types = tuple(allowed_types or LEARNING_MODE_TYPES)
+        allowed_difficulties = normalise_difficulties(allowed_difficulties)
         valid_types = {"mcq", "subjective", "theory"}
         if not allowed_types or not set(allowed_types).issubset(valid_types):
             raise ValueError("Choose at least one valid learning item type.")
@@ -36,7 +44,11 @@ class LearningSessionMixin:
             raise ValueError("Choose a valid timer preset.")
         if scope not in self.get_learning_scopes(category):
             raise ValueError("Choose a valid subject or subtopic scope.")
-        available_types = self.get_prepared_item_types(category, scope)
+        available_types = self.get_prepared_item_types(
+            category,
+            scope,
+            allowed_difficulties,
+        )
         missing_types = [item_type for item_type in allowed_types if item_type not in available_types]
         if missing_types:
             labels = {"mcq": "objective questions", "subjective": "subjective questions", "theory": "theory cards"}
@@ -50,6 +62,7 @@ class LearningSessionMixin:
         self.learning_scope = scope
         self.learning_boundary_label = category if not scope else f"{category} / {scope}"
         self.learning_types = allowed_types
+        self.learning_difficulties = allowed_difficulties
         self.learning_type_cycle = []
         self.prepared_item_ids.clear()
         self.timer_preset = timer_preset
@@ -109,8 +122,15 @@ class LearningSessionMixin:
             "time_limit": time_limit, "difficulty": item.get("difficulty"),
         }
 
-    def _prepared_item_candidates(self, subject, scope, item_type):
+    def _prepared_item_candidates(
+        self,
+        subject,
+        scope,
+        item_type,
+        difficulties=None,
+    ):
         subject = self._folder_name(subject)
+        difficulties = normalise_difficulties(difficulties)
         root = (self.course_path / subject).resolve()
         if scope not in self.get_learning_scopes(subject):
             return
@@ -131,7 +151,7 @@ class LearningSessionMixin:
                 continue
             source_hash = self._notes_hash(notes)
             label = subject if not relative_topic.parts else f"{subject} / {relative_topic}"
-            for difficulty in QUESTION_BANK_DIFFICULTIES:
+            for difficulty in difficulties:
                 bank = self._read_question_bank(notes_path.parent, item_type, difficulty, source_hash)
                 if not bank:
                     continue
@@ -146,16 +166,30 @@ class LearningSessionMixin:
                         {"label": label, "notes": notes},
                     )
 
-    def get_prepared_item_types(self, subject, scope=""):
+    def get_prepared_item_types(self, subject, scope="", difficulties=None):
+        difficulties = normalise_difficulties(difficulties)
         return {
             item_type for item_type in ("mcq", "subjective", "theory")
-            if next(self._prepared_item_candidates(subject, scope, item_type), None) is not None
+            if next(
+                self._prepared_item_candidates(
+                    subject,
+                    scope,
+                    item_type,
+                    difficulties,
+                ),
+                None,
+            ) is not None
         }
 
     def _select_prepared_step(self, subject, item_type):
         selected = fallback = None
         unseen_count = fallback_count = 0
-        for identifier, step, context in self._prepared_item_candidates(subject, self.learning_scope, item_type):
+        for identifier, step, context in self._prepared_item_candidates(
+            subject,
+            self.learning_scope,
+            item_type,
+            self.learning_difficulties,
+        ):
             fallback_count += 1
             if random.randrange(fallback_count) == 0:
                 fallback = (identifier, step, context)

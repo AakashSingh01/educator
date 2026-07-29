@@ -4,6 +4,7 @@ import streamlit as st
 
 from backend import LearningBackend
 from config.learning import QUESTION_MODE_TYPES
+from config.question_bank import QUESTION_BANK_DIFFICULTIES
 from llm_logging import LoggedLLMClient
 
 
@@ -20,6 +21,7 @@ DEFAULTS = {
     "setup_subject": None,
     "learning_timer": "Normal",
     "learning_types": list(QUESTION_MODE_TYPES["Both"]),
+    "learning_difficulties": list(QUESTION_BANK_DIFFICULTIES),
     "is_generating": False,
     "ask_messages": [],
     "mock_test_question_index": 0,
@@ -41,9 +43,25 @@ def initialize_session():
     return st.session_state.backend
 
 
-def reset_chapter(backend, category, scope="", allowed_types=None, timer_preset="Normal"):
+def reset_chapter(
+    backend,
+    category,
+    scope="",
+    allowed_types=None,
+    timer_preset="Normal",
+    allowed_difficulties=None,
+):
     allowed_types = tuple(allowed_types or QUESTION_MODE_TYPES["Both"])
-    backend.start_course(category, scope, allowed_types, timer_preset)
+    allowed_difficulties = tuple(
+        allowed_difficulties or QUESTION_BANK_DIFFICULTIES
+    )
+    backend.start_course(
+        category,
+        scope,
+        allowed_types,
+        timer_preset,
+        allowed_difficulties,
+    )
     st.session_state.category = category
     st.session_state.started = True
     st.session_state.step = backend.first_step()
@@ -54,6 +72,7 @@ def reset_chapter(backend, category, scope="", allowed_types=None, timer_preset=
     st.session_state.is_generating = False
     st.session_state.learning_timer = timer_preset
     st.session_state.learning_types = list(allowed_types)
+    st.session_state.learning_difficulties = list(allowed_difficulties)
 
 
 def mark_generating():
